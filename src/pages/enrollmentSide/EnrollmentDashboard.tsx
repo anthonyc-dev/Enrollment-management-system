@@ -47,7 +47,7 @@ const EnrollmentDashboard: React.FC = () => {
               {record.student.firstName} {record.student.lastName}
             </div>
             <div className="text-sm text-gray-500">
-              {record.student.schoolId}
+              {record.student.studentNumber}
             </div>
           </div>
         </Space>

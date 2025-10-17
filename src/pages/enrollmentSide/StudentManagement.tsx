@@ -101,6 +101,8 @@ const StudentManagement: React.FC = () => {
   useEffect(() => {
     if (isModalOpen && !editingStudent) {
       form.resetFields();
+      // Set default status to 'Active' for new students
+      form.setFieldsValue({ status: 'Active' });
     }
   }, [isModalOpen, editingStudent, form]);
 
@@ -180,6 +182,7 @@ const StudentManagement: React.FC = () => {
           department: values.department,
           yearLevel: values.yearLevel,
           program: values.program,
+          status: values.status,
         };
 
         try {
@@ -218,6 +221,7 @@ const StudentManagement: React.FC = () => {
           dateOfBirth: values.dateOfBirth
             ? values.dateOfBirth.format("YYYY-MM-DD")
             : "",
+          status: values.status || "Active", // Default to Active if not specified
         };
 
         try {
@@ -664,6 +668,19 @@ const StudentManagement: React.FC = () => {
                 {programs.map((program) => (
                   <Option key={program} value={program}>
                     {program}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item
+              name="status"
+              label="Status"
+              rules={[{ required: true, message: "Please select status" }]}
+            >
+              <Select placeholder="Select status" allowClear>
+                {statuses.map((status) => (
+                  <Option key={status} value={status}>
+                    {status}
                   </Option>
                 ))}
               </Select>

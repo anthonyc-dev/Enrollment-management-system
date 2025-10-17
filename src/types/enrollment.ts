@@ -3,6 +3,7 @@
 export interface Student {
   id: string;
   studentNumber: string;
+  schoolId?: string;
   firstName: string;
   lastName: string;
   middleName?: string;
@@ -66,17 +67,22 @@ export interface Section {
 
 export interface Semester {
   id: string;
-  semesterName: string; // e.g., "1st Semester AY 2025–2026"
-  academicYear: string; // e.g., "2025–2026"
-  semesterType: "FIRST" | "SECOND" | "SUMMER"; // e.g., "FIRST", "SECOND", "SUMMER"
-  semesterDuration: string; // e.g., "June 2025 – October 2025"
-  enrollmentPeriod: string; // e.g., "May 1 – June 15, 2025"
-  // Additional fields for compatibility with dummy data
-  startDate?: string; // e.g., "2024-08-15"
-  endDate?: string; // e.g., "2024-12-15"
-  enrollmentStartDate?: string; // e.g., "2024-07-01"
-  enrollmentEndDate?: string; // e.g., "2024-08-14"
-  status: "active" | "inactive" | "completed" | "Active" | "Inactive" | "Completed";
+  semesterName: string;
+  academicYear: string;
+  semesterType: "FIRST" | "SECOND" | "SUMMER";
+  semesterDuration: string;
+  enrollmentPeriod: string;
+  startDate?: string;
+  endDate?: string;
+  enrollmentStartDate?: string;
+  enrollmentEndDate?: string;
+  status:
+    | "active"
+    | "inactive"
+    | "completed"
+    | "Active"
+    | "Inactive"
+    | "Completed";
   dateCreated: string;
   dateUpdated: string;
 }
@@ -147,6 +153,7 @@ export interface CreateStudentForm {
   department: string;
   yearLevel: "1st Year" | "2nd Year" | "3rd Year" | "4th Year" | "5th Year";
   program?: string;
+  status?: "Active" | "Inactive" | "Graduated" | "Dropped";
 }
 
 export interface CreateCourseForm {

@@ -8,10 +8,11 @@ import {
   Space,
   message,
   Tag,
-  Badge,
   Steps,
   Divider,
   Select,
+  Spin,
+  Alert,
 } from "antd";
 import {
   UserOutlined,
@@ -22,10 +23,16 @@ import {
   CheckCircleOutlined,
   CalendarOutlined,
   TeamOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
 import { type ColumnsType } from "antd/es/table";
-import type { Enrollment, Section, Student } from "../../types/enrollment";
-import { enrollmentDummyData } from "../../data/enrollmentDummyData";
+import type {
+  Enrollment,
+  Section,
+  Student,
+  Semester,
+} from "../../types/enrollment";
+import { enrollmentService } from "../../api/enrollmentService";
 
 const { Step } = Steps;
 
@@ -46,9 +53,26 @@ const StudentEnrollment: React.FC = () => {
     useState<string>("");
   const [courseYearLevelFilter, setCourseYearLevelFilter] =
     useState<string>("");
-  const [enrollments, setEnrollments] = useState<Enrollment[]>(
-    enrollmentDummyData.enrollments
-  );
+
+  // API Data States
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [sections, setSections] = useState<Section[]>([]);
+  const [semesters, setSemesters] = useState<Semester[]>([]);
+
+  // Loading States
+  const [loading, setLoading] = useState(false);
+  const [enrollmentsLoading, setEnrollmentsLoading] = useState(false);
+  const [studentsLoading, setStudentsLoading] = useState(false);
+  const [sectionsLoading, setSectionsLoading] = useState(false);
+  const [semestersLoading, setSemestersLoading] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Error States
+  const [error, setError] = useState<string | null>(null);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   // Current Enrollments – table controls
   const [enrollmentSearchText, setEnrollmentSearchText] = useState("");
@@ -63,8 +87,94 @@ const StudentEnrollment: React.FC = () => {
   );
   const [editingStatus, setEditingStatus] =
     useState<Enrollment["status"]>("Enrolled");
+  const [editingGrade, setEditingGrade] = useState<string>("");
+  const [editingRemarks, setEditingRemarks] = useState<string>("");
 
-  const { students, sections, semesters } = enrollmentDummyData;
+  // Fetch all data on component mount
+  useEffect(() => {
+    fetchAllData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Fetch all required data
+  const fetchAllData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await Promise.all([
+        fetchEnrollments(),
+        fetchStudents(),
+        fetchSections(),
+        fetchSemesters(),
+      ]);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setError("Failed to load data. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch enrollments from API
+  const fetchEnrollments = async () => {
+    try {
+      setEnrollmentsLoading(true);
+      const data = await enrollmentService.getAllEnrollments();
+      console.log("Fetched enrollments:", data);
+      setEnrollments(data || []);
+    } catch (error) {
+      console.error("Error fetching enrollments:", error);
+      message.error("Failed to fetch enrollments");
+      setEnrollments([]);
+    } finally {
+      setEnrollmentsLoading(false);
+    }
+  };
+
+  // Fetch students from API
+  const fetchStudents = async () => {
+    try {
+      setStudentsLoading(true);
+      const data = await enrollmentService.getStudents();
+      console.log("Fetched students:", data);
+      setStudents(data || []);
+    } catch (error) {
+      console.error("Error fetching students:", error);
+      setStudents([]);
+    } finally {
+      setStudentsLoading(false);
+    }
+  };
+
+  // Fetch sections from API
+  const fetchSections = async () => {
+    try {
+      setSectionsLoading(true);
+      const data = await enrollmentService.getSections();
+      console.log("Fetched sections:", data);
+      setSections(data || []);
+    } catch (error) {
+      console.error("Error fetching sections:", error);
+      setSections([]);
+    } finally {
+      setSectionsLoading(false);
+    }
+  };
+
+  // Fetch semesters from API
+  const fetchSemesters = async () => {
+    try {
+      setSemestersLoading(true);
+      const data = await enrollmentService.getSemesters();
+      console.log("Fetched semesters:", data);
+      setSemesters(data || []);
+    } catch (error) {
+      console.error("Error fetching semesters:", error);
+      setSemesters([]);
+    } finally {
+      setSemestersLoading(false);
+    }
+  };
 
   // Unique filters from student data
   const uniqueDepartments = Array.from(
@@ -82,9 +192,9 @@ const StudentEnrollment: React.FC = () => {
   const filteredStudents = students.filter((student) => {
     const matchesSearch =
       !searchText ||
-      student.firstName.toLowerCase().includes(searchText.toLowerCase()) ||
-      student.lastName.toLowerCase().includes(searchText.toLowerCase()) ||
-      student.studentNumber.toLowerCase().includes(searchText.toLowerCase());
+      student.firstName?.toLowerCase().includes(searchText.toLowerCase()) ||
+      student.lastName?.toLowerCase().includes(searchText.toLowerCase()) ||
+      student.studentNumber?.toLowerCase().includes(searchText.toLowerCase());
 
     const matchesDepartment =
       !studentDepartmentFilter ||
@@ -97,7 +207,7 @@ const StudentEnrollment: React.FC = () => {
   });
 
   // Get sections for selected semester
-  const availableSections = sections.filter(
+  const availableSections = (sections || []).filter(
     (section) =>
       section.semesterId === selectedSemester &&
       section.status === "Open" &&
@@ -106,18 +216,28 @@ const StudentEnrollment: React.FC = () => {
 
   // Fallback: if no available sections, show existing dummy sections
   const fallbackSections = selectedSemester
-    ? sections.filter((section) => section.semesterId === selectedSemester)
-    : sections;
+    ? (sections || []).filter(
+        (section) => section.semesterId === selectedSemester
+      )
+    : sections || [];
   const displayedSections =
     availableSections.length > 0 ? availableSections : fallbackSections;
 
   // Derived filters for Select Courses step
   const uniqueDays = Array.from(
-    new Set(sections.flatMap((s) => s.schedule.map((sched) => sched.day)))
+    new Set(
+      (sections || [])
+        .filter((s) => s?.schedule && Array.isArray(s.schedule))
+        .flatMap((s) => s.schedule.map((sched) => sched?.day).filter(Boolean))
+    )
   );
 
   const uniqueCourseDepartments = Array.from(
-    new Set(sections.map((s) => s.course.department))
+    new Set(
+      (sections || [])
+        .filter((s) => s?.course?.department)
+        .map((s) => s.course.department)
+    )
   );
 
   // Infer recommended year level from course code number (e.g., 101 -> 1st Year)
@@ -153,19 +273,27 @@ const StudentEnrollment: React.FC = () => {
   }, [selectedStudent]);
 
   const filteredDisplayedSections = displayedSections.filter((section) => {
+    // Ensure section has required properties
+    if (!section || !section.course) {
+      return false;
+    }
+
     const matchesText =
       !courseQuery ||
-      section.sectionCode.toLowerCase().includes(courseQuery.toLowerCase()) ||
-      section.sectionName.toLowerCase().includes(courseQuery.toLowerCase()) ||
+      section.sectionCode?.toLowerCase().includes(courseQuery.toLowerCase()) ||
+      section.sectionName?.toLowerCase().includes(courseQuery.toLowerCase()) ||
       section.course.courseCode
-        .toLowerCase()
+        ?.toLowerCase()
         .includes(courseQuery.toLowerCase()) ||
       section.course.courseName
-        .toLowerCase()
+        ?.toLowerCase()
         .includes(courseQuery.toLowerCase());
 
     const matchesDay =
-      !dayFilter || section.schedule.some((sched) => sched.day === dayFilter);
+      !dayFilter ||
+      (section.schedule &&
+        Array.isArray(section.schedule) &&
+        section.schedule.some((sched) => sched?.day === dayFilter));
 
     const matchesAvailability =
       availabilityFilter === "all"
@@ -180,9 +308,11 @@ const StudentEnrollment: React.FC = () => {
 
     const matchesDepartmentFilter =
       !courseDepartmentFilter ||
-      section.course.department === courseDepartmentFilter;
+      section.course?.department === courseDepartmentFilter;
 
-    const courseYearLevel = mapCourseCodeToYearLevel(section.course.courseCode);
+    const courseYearLevel = section.course?.courseCode
+      ? mapCourseCodeToYearLevel(section.course.courseCode)
+      : undefined;
     const matchesYearLevelFilter =
       !courseYearLevelFilter || courseYearLevelFilter === courseYearLevel;
 
@@ -207,29 +337,29 @@ const StudentEnrollment: React.FC = () => {
   const filteredEnrollments = enrollments.filter((record) => {
     const matchesSearch =
       !enrollmentSearchText ||
-      record.student.firstName
-        .toLowerCase()
+      record.student?.firstName
+        ?.toLowerCase()
         .includes(enrollmentSearchText.toLowerCase()) ||
-      record.student.lastName
-        .toLowerCase()
+      record.student?.lastName
+        ?.toLowerCase()
         .includes(enrollmentSearchText.toLowerCase()) ||
-      record.student.studentNumber
-        .toLowerCase()
+      record.student?.studentNumber
+        ?.toLowerCase()
         .includes(enrollmentSearchText.toLowerCase()) ||
-      record.section.course.courseName
-        .toLowerCase()
+      record.section?.sectionCode
+        ?.toLowerCase()
         .includes(enrollmentSearchText.toLowerCase()) ||
-      record.section.course.courseCode
-        .toLowerCase()
+      record.section?.sectionName
+        ?.toLowerCase()
         .includes(enrollmentSearchText.toLowerCase());
 
     const matchesDepartment =
       !enrollmentDepartmentFilter ||
-      record.student.department === enrollmentDepartmentFilter;
+      record.student?.department === enrollmentDepartmentFilter;
 
     const matchesYearLevel =
       !enrollmentYearLevelFilter ||
-      record.student.yearLevel === enrollmentYearLevelFilter;
+      record.student?.yearLevel === enrollmentYearLevelFilter;
 
     return matchesSearch && matchesDepartment && matchesYearLevel;
   });
@@ -248,7 +378,7 @@ const StudentEnrollment: React.FC = () => {
     );
   };
 
-  const handleEnrollStudent = () => {
+  const handleEnrollStudent = async () => {
     if (
       !selectedStudent ||
       !selectedSemester ||
@@ -258,45 +388,39 @@ const StudentEnrollment: React.FC = () => {
       return;
     }
 
-    const newEnrollments: Enrollment[] = selectedSections.map((sectionId) => {
-      const section = sections.find((s) => s.id === sectionId);
-      const semester = semesters.find((s) => s.id === selectedSemester);
+    setCreateLoading(true);
+    try {
+      // Create enrollments for each selected section
+      const enrollmentPromises = selectedSections.map((sectionId) =>
+        enrollmentService.createEnrollment({
+          studentId: selectedStudent.id,
+          sectionId: sectionId,
+          semesterId: selectedSemester,
+          status: "Enrolled",
+        })
+      );
 
-      return {
-        id: `enrollment-${Date.now()}-${sectionId}`,
-        studentId: selectedStudent.id,
-        student: selectedStudent,
-        sectionId: sectionId,
-        section: section!,
-        semesterId: selectedSemester,
-        semester: semester!,
-        enrollmentDate: new Date().toISOString(),
-        status: "Enrolled",
-        dateCreated: new Date().toISOString(),
-        dateUpdated: new Date().toISOString(),
-      };
-    });
+      await Promise.all(enrollmentPromises);
 
-    setEnrollments([...enrollments, ...newEnrollments]);
+      message.success(
+        `Successfully enrolled ${selectedStudent.firstName} ${selectedStudent.lastName} in ${selectedSections.length} section(s)`
+      );
 
-    // Update section enrollment counts
-    selectedSections.forEach((sectionId) => {
-      const section = sections.find((s) => s.id === sectionId);
-      if (section) {
-        section.currentEnrollment += 1;
-      }
-    });
+      // Refresh enrollments data
+      await fetchEnrollments();
 
-    message.success(
-      `Successfully enrolled ${selectedStudent.firstName} ${selectedStudent.lastName} in ${selectedSections.length} section(s)`
-    );
-
-    // Reset form
-    setSelectedStudent(null);
-    setSelectedSemester("");
-    setSelectedSections([]);
-    setCurrentStep(0);
-    setIsModalOpen(false);
+      // Reset form
+      setSelectedStudent(null);
+      setSelectedSemester("");
+      setSelectedSections([]);
+      setCurrentStep(0);
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error("Error creating enrollments:", error);
+      message.error("Failed to create enrollments. Please try again.");
+    } finally {
+      setCreateLoading(false);
+    }
   };
 
   const handleRemoveEnrollment = (enrollmentId: string) => {
@@ -305,18 +429,20 @@ const StudentEnrollment: React.FC = () => {
       content: "Are you sure you want to remove this enrollment?",
       okText: "Yes, Remove",
       okType: "danger",
-      onOk() {
-        const enrollment = enrollments.find((e) => e.id === enrollmentId);
-        if (enrollment) {
-          // Update section enrollment count
-          const section = sections.find((s) => s.id === enrollment.sectionId);
-          if (section) {
-            section.currentEnrollment -= 1;
-          }
-        }
+      async onOk() {
+        setDeleteLoading(true);
+        try {
+          await enrollmentService.deleteEnrollment(enrollmentId);
+          message.success("Enrollment removed successfully");
 
-        setEnrollments(enrollments.filter((e) => e.id !== enrollmentId));
-        message.success("Enrollment removed successfully");
+          // Refresh enrollments data
+          await fetchEnrollments();
+        } catch (error) {
+          console.error("Error deleting enrollment:", error);
+          message.error("Failed to delete enrollment. Please try again.");
+        } finally {
+          setDeleteLoading(false);
+        }
       },
     });
   };
@@ -332,7 +458,9 @@ const StudentEnrollment: React.FC = () => {
             <div className="font-medium">
               {record.firstName} {record.lastName}
             </div>
-            <div className="text-sm text-gray-500">{record.studentNumber}</div>
+            <div className="text-sm text-gray-500">
+              {record.schoolId || "N/A"}
+            </div>
           </div>
         </Space>
       ),
@@ -391,12 +519,14 @@ const StudentEnrollment: React.FC = () => {
       key: "course",
       render: (_, record) => (
         <div>
-          <div className="font-medium">{record.course.courseCode}</div>
+          <div className="font-medium">
+            {record.course?.courseCode || "N/A"}
+          </div>
           <div className="text-sm text-gray-500">
-            {record.course.courseName}
+            {record.course?.courseName || "N/A"}
           </div>
           <div className="text-xs text-gray-400">
-            {record.course.units} units
+            {record.course?.units || 0} units
           </div>
         </div>
       ),
@@ -406,12 +536,16 @@ const StudentEnrollment: React.FC = () => {
       key: "schedule",
       render: (_, record) => (
         <div className="text-sm">
-          {record.schedule.map((sched, index) => (
+          {(record.schedule || []).map((sched, index) => (
             <div key={index} className="text-xs">
-              {sched.day} {sched.startTime}-{sched.endTime}
-              {sched.room && ` (${sched.room})`}
+              {sched?.day || "N/A"} {sched?.startTime || ""}-
+              {sched?.endTime || ""}
+              {sched?.room && ` (${sched.room})`}
             </div>
           ))}
+          {(!record.schedule || record.schedule.length === 0) && (
+            <div className="text-xs text-gray-400">No schedule available</div>
+          )}
         </div>
       ),
     },
@@ -480,10 +614,10 @@ const StudentEnrollment: React.FC = () => {
           <UserOutlined className="text-blue-500" />
           <div>
             <div className="font-medium">
-              {record.student.firstName} {record.student.lastName}
+              {record.student?.firstName} {record.student?.lastName}
             </div>
             <div className="text-sm text-gray-500">
-              {record.student.studentNumber}
+              {record.student?.schoolId || "N/A"}
             </div>
           </div>
         </Space>
@@ -494,9 +628,11 @@ const StudentEnrollment: React.FC = () => {
       key: "section",
       render: (_, record) => (
         <div>
-          <div className="font-medium">{record.section.sectionCode}</div>
+          <div className="font-medium">
+            {record.section?.sectionCode || "N/A"}
+          </div>
           <div className="text-sm text-gray-500">
-            {record.section.course.courseName}
+            {record.section?.sectionName || "N/A"}
           </div>
         </div>
       ),
@@ -506,32 +642,55 @@ const StudentEnrollment: React.FC = () => {
       key: "semester",
       render: (_, record) => (
         <div>
-          <div className="font-medium">{record.semester.semesterName}</div>
+          <div className="font-medium">
+            {record.semester?.semesterName || "N/A"}
+          </div>
           <div className="text-sm text-gray-500">
-            {record.semester.academicYear}
+            {record.semester?.academicYear || "N/A"}
           </div>
         </div>
       ),
     },
     {
-      title: "Units",
-      dataIndex: ["section", "course", "units"],
-      key: "units",
-      render: (units: number) => <Badge count={units} showZero color="blue" />,
-    },
-    {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (status: string) => (
-        <Tag color={status === "Enrolled" ? "green" : "red"}>{status}</Tag>
+      render: (status: string) => {
+        const color =
+          status === "Enrolled"
+            ? "green"
+            : status === "Dropped"
+            ? "red"
+            : status === "Withdrawn"
+            ? "orange"
+            : status === "Completed"
+            ? "blue"
+            : "default";
+        return <Tag color={color}>{status}</Tag>;
+      },
+    },
+    {
+      title: "Grade",
+      dataIndex: "grade",
+      key: "grade",
+      render: (grade: string) => grade || "N/A",
+    },
+    {
+      title: "Remarks",
+      dataIndex: "remarks",
+      key: "remarks",
+      render: (remarks: string) => (
+        <div className="max-w-xs truncate" title={remarks}>
+          {remarks || "N/A"}
+        </div>
       ),
     },
     {
       title: "Enrollment Date",
       dataIndex: "enrollmentDate",
       key: "enrollmentDate",
-      render: (date: string) => new Date(date).toLocaleDateString(),
+      render: (date: string) =>
+        date ? new Date(date).toLocaleDateString() : "N/A",
     },
     {
       title: "Actions",
@@ -543,8 +702,11 @@ const StudentEnrollment: React.FC = () => {
             onClick={() => {
               setEditingEnrollment(record);
               setEditingStatus(record.status);
+              setEditingGrade(record.grade || "");
+              setEditingRemarks(record.remarks || "");
               setIsEditModalOpen(true);
             }}
+            loading={updateLoading}
           >
             Edit
           </Button>
@@ -552,6 +714,7 @@ const StudentEnrollment: React.FC = () => {
             type="text"
             danger
             onClick={() => handleRemoveEnrollment(record.id)}
+            loading={deleteLoading}
           >
             Remove
           </Button>
@@ -596,14 +759,37 @@ const StudentEnrollment: React.FC = () => {
             Enroll students in courses for the current semester
           </p>
         </div>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => setIsModalOpen(true)}
-        >
-          Enroll Student
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setIsModalOpen(true)}
+            loading={createLoading}
+          >
+            Enroll Student
+          </Button>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={fetchAllData}
+            loading={loading}
+          >
+            Refresh
+          </Button>
+        </div>
       </div>
+
+      {/* Error Alert */}
+      {error && (
+        <Alert
+          message="Error"
+          description={error}
+          type="error"
+          showIcon
+          closable
+          onClose={() => setError(null)}
+          className="mb-4"
+        />
+      )}
 
       {/* Current Enrollments */}
       <Card title="Current Enrollments" className="mb-6">
@@ -636,13 +822,21 @@ const StudentEnrollment: React.FC = () => {
             }))}
           />
         </div>
-        <Table
-          columns={enrollmentColumns}
-          dataSource={filteredEnrollments}
-          rowKey="id"
-          pagination={{ pageSize: 10 }}
-          scroll={{ x: "max-content" }}
-        />
+        <Spin spinning={enrollmentsLoading}>
+          <Table
+            columns={enrollmentColumns}
+            dataSource={filteredEnrollments}
+            rowKey="id"
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) =>
+                `${range[0]}-${range[1]} of ${total} enrollments`,
+            }}
+            scroll={{ x: "max-content" }}
+          />
+        </Spin>
       </Card>
 
       {/* Enrollment Modal */}
@@ -680,7 +874,12 @@ const StudentEnrollment: React.FC = () => {
               Next
             </Button>
           ) : (
-            <Button key="enroll" type="primary" onClick={handleEnrollStudent}>
+            <Button
+              key="enroll"
+              type="primary"
+              onClick={handleEnrollStudent}
+              loading={createLoading}
+            >
               Complete Enrollment
             </Button>
           ),
@@ -722,13 +921,15 @@ const StudentEnrollment: React.FC = () => {
                 options={uniqueYearLevels.map((y) => ({ label: y, value: y }))}
               />
             </div>
-            <Table
-              columns={studentColumns}
-              dataSource={filteredStudents}
-              rowKey="id"
-              pagination={{ pageSize: 5 }}
-              size="small"
-            />
+            <Spin spinning={studentsLoading}>
+              <Table
+                columns={studentColumns}
+                dataSource={filteredStudents}
+                rowKey="id"
+                pagination={{ pageSize: 5 }}
+                size="small"
+              />
+            </Spin>
             {selectedStudent && (
               <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                 <h4 className="font-medium text-blue-800">Selected Student:</h4>
@@ -744,44 +945,57 @@ const StudentEnrollment: React.FC = () => {
         {currentStep === 1 && (
           <div className="mt-5">
             <h4 className="font-medium mb-4">Select Semester:</h4>
-            <div className="space-y-2 mt-5">
-              {semesters.map((semester) => (
-                <Card
-                  key={semester.id}
-                  hoverable
-                  className={`cursor-pointer mt-5 ${
-                    selectedSemester === semester.id
-                      ? "border-blue-500 bg-blue-50"
-                      : ""
-                  }`}
-                  onClick={() => setSelectedSemester(semester.id)}
-                >
-                  <div className="flex justify-between items-center mt-5">
-                    <div>
-                      <div className="font-medium">{semester.semesterName}</div>
-                      <div className="text-sm text-gray-500">
-                        {semester.academicYear}
+            <Spin spinning={semestersLoading}>
+              <div className="space-y-2 mt-5">
+                {semesters.map((semester) => (
+                  <Card
+                    key={semester.id}
+                    hoverable
+                    className={`cursor-pointer mt-5 ${
+                      selectedSemester === semester.id
+                        ? "border-blue-500 bg-blue-50"
+                        : ""
+                    }`}
+                    onClick={() => setSelectedSemester(semester.id)}
+                  >
+                    <div className="flex justify-between items-center mt-5">
+                      <div>
+                        <div className="font-medium">
+                          {semester.semesterName}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {semester.academicYear}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {semester.startDate && semester.endDate ? (
+                            <>
+                              {new Date(
+                                semester.startDate
+                              ).toLocaleDateString()}{" "}
+                              -{" "}
+                              {new Date(semester.endDate).toLocaleDateString()}
+                            </>
+                          ) : (
+                            semester.semesterDuration ||
+                            "Duration not specified"
+                          )}
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-400">
-                        {semester.startDate && semester.endDate ? (
-                          <>
-                            {new Date(semester.startDate).toLocaleDateString()} -{" "}
-                            {new Date(semester.endDate).toLocaleDateString()}
-                          </>
-                        ) : (
-                          semester.semesterDuration || "Duration not specified"
-                        )}
-                      </div>
+                      <Tag
+                        color={
+                          semester.status === "active" ||
+                          semester.status === "Active"
+                            ? "green"
+                            : "blue"
+                        }
+                      >
+                        {semester.status}
+                      </Tag>
                     </div>
-                    <Tag
-                      color={semester.status === "active" || semester.status === "Active" ? "green" : "blue"}
-                    >
-                      {semester.status}
-                    </Tag>
-                  </div>
-                </Card>
-              ))}
-            </div>
+                  </Card>
+                ))}
+              </div>
+            </Spin>
           </div>
         )}
 
@@ -801,8 +1015,10 @@ const StudentEnrollment: React.FC = () => {
                 <Tag color="green" className="ml-2">
                   Total Units:{" "}
                   {selectedSections.reduce((total, sectionId) => {
-                    const section = sections.find((s) => s.id === sectionId);
-                    return total + (section?.course.units || 0);
+                    const section = (sections || []).find(
+                      (s) => s.id === sectionId
+                    );
+                    return total + (section?.course?.units || 0);
                   }, 0)}
                 </Tag>
               )}
@@ -851,13 +1067,15 @@ const StudentEnrollment: React.FC = () => {
                 options={uniqueYearLevels.map((y) => ({ label: y, value: y }))}
               />
             </div>
-            <Table
-              columns={sectionColumns}
-              dataSource={filteredDisplayedSections}
-              rowKey="id"
-              pagination={{ pageSize: 5 }}
-              size="small"
-            />
+            <Spin spinning={sectionsLoading}>
+              <Table
+                columns={sectionColumns}
+                dataSource={filteredDisplayedSections}
+                rowKey="id"
+                pagination={{ pageSize: 5 }}
+                size="small"
+              />
+            </Spin>
           </div>
         )}
 
@@ -897,7 +1115,9 @@ const StudentEnrollment: React.FC = () => {
                 <h5 className="font-medium mb-2">Selected Courses:</h5>
                 <div className="space-y-2">
                   {selectedSections.map((sectionId) => {
-                    const section = sections.find((s) => s.id === sectionId);
+                    const section = (sections || []).find(
+                      (s) => s.id === sectionId
+                    );
                     return section ? (
                       <div
                         key={sectionId}
@@ -905,13 +1125,16 @@ const StudentEnrollment: React.FC = () => {
                       >
                         <div>
                           <div className="font-medium">
-                            {section.sectionCode} - {section.course.courseName}
+                            {section.sectionCode} -{" "}
+                            {section.course?.courseName || "N/A"}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {section.course.units} units
+                            {section.course?.units || 0} units
                           </div>
                         </div>
-                        <Tag color="blue">{section.course.units} units</Tag>
+                        <Tag color="blue">
+                          {section.course?.units || 0} units
+                        </Tag>
                       </div>
                     ) : null;
                   })}
@@ -921,8 +1144,10 @@ const StudentEnrollment: React.FC = () => {
                   <span>Total Units:</span>
                   <span className="text-blue-600">
                     {selectedSections.reduce((total, sectionId) => {
-                      const section = sections.find((s) => s.id === sectionId);
-                      return total + (section?.course.units || 0);
+                      const section = (sections || []).find(
+                        (s) => s.id === sectionId
+                      );
+                      return total + (section?.course?.units || 0);
                     }, 0)}
                   </span>
                 </div>
@@ -939,26 +1164,38 @@ const StudentEnrollment: React.FC = () => {
           setIsEditModalOpen(false);
           setEditingEnrollment(null);
         }}
-        onOk={() => {
+        onOk={async () => {
           if (!editingEnrollment) return;
-          setEnrollments((prev) =>
-            prev.map((e) =>
-              e.id === editingEnrollment.id
-                ? {
-                    ...e,
-                    status: editingStatus,
-                    dateUpdated: new Date().toISOString(),
-                  }
-                : e
-            )
-          );
-          message.success("Enrollment updated");
-          setIsEditModalOpen(false);
-          setEditingEnrollment(null);
+
+          setUpdateLoading(true);
+          try {
+            await enrollmentService.updateEnrollment(editingEnrollment.id, {
+              status: editingStatus,
+              grade: editingGrade,
+              remarks: editingRemarks,
+            });
+
+            message.success("Enrollment updated successfully");
+
+            // Refresh enrollments data
+            await fetchEnrollments();
+
+            setIsEditModalOpen(false);
+            setEditingEnrollment(null);
+            setEditingStatus("Enrolled");
+            setEditingGrade("");
+            setEditingRemarks("");
+          } catch (error) {
+            console.error("Error updating enrollment:", error);
+            message.error("Failed to update enrollment. Please try again.");
+          } finally {
+            setUpdateLoading(false);
+          }
         }}
         okText="Save"
+        confirmLoading={updateLoading}
       >
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div>
             <div className="text-sm text-gray-500 mb-1">Status</div>
             <Select
@@ -967,9 +1204,30 @@ const StudentEnrollment: React.FC = () => {
               options={[
                 { label: "Enrolled", value: "Enrolled" },
                 { label: "Dropped", value: "Dropped" },
-                { label: "Pending", value: "Pending" },
+                { label: "Withdrawn", value: "Withdrawn" },
+                { label: "Completed", value: "Completed" },
               ]}
-              style={{ width: 240 }}
+              style={{ width: "100%" }}
+            />
+          </div>
+          <div>
+            <div className="text-sm text-gray-500 mb-1">Grade</div>
+            <Input
+              value={editingGrade}
+              onChange={(e) => setEditingGrade(e.target.value)}
+              placeholder="Enter grade (e.g., A, B+, 85, etc.)"
+              maxLength={10}
+            />
+          </div>
+          <div>
+            <div className="text-sm text-gray-500 mb-1">Remarks</div>
+            <Input.TextArea
+              value={editingRemarks}
+              onChange={(e) => setEditingRemarks(e.target.value)}
+              placeholder="Enter any remarks or notes"
+              rows={3}
+              maxLength={500}
+              showCount
             />
           </div>
         </div>
