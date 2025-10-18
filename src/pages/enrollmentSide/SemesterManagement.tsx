@@ -218,8 +218,8 @@ const SemesterManagement: React.FC = () => {
       semesterName: semester.semesterName,
       academicYear: semester.academicYear,
       semesterType: semester.semesterType,
-      semesterDuration: parseSemesterDuration(semester.semesterDuration),
-      enrollmentPeriod: parseEnrollmentPeriod(semester.enrollmentPeriod),
+      semesterDuration: parseSemesterDuration(semester.semesterDuration || ""),
+      enrollmentPeriod: parseEnrollmentPeriod(semester.enrollmentPeriod || ""),
     });
     setIsModalOpen(true);
   };
@@ -887,7 +887,7 @@ const SemesterManagement: React.FC = () => {
         confirmLoading={modalLoading}
         width={600}
       >
-        <Form form={form} layout="vertical">
+        <Form form={form} layout="vertical" preserve={false}>
           <Form.Item
             name="semesterName"
             label="Semester Name"
@@ -925,7 +925,10 @@ const SemesterManagement: React.FC = () => {
                         value,
                         semesterType
                       );
-                      form.setFieldValue("semesterName", generatedName);
+                      // Use setTimeout to prevent circular reference
+                      setTimeout(() => {
+                        form.setFieldValue("semesterName", generatedName);
+                      }, 0);
                     }
                   }}
                 >
@@ -954,7 +957,10 @@ const SemesterManagement: React.FC = () => {
                         academicYear,
                         value
                       );
-                      form.setFieldValue("semesterName", generatedName);
+                      // Use setTimeout to prevent circular reference
+                      setTimeout(() => {
+                        form.setFieldValue("semesterName", generatedName);
+                      }, 0);
                     }
                   }}
                 >

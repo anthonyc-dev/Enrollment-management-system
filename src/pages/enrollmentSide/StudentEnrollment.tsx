@@ -24,48 +24,61 @@ import {
   CalendarOutlined,
   TeamOutlined,
   ReloadOutlined,
+  EyeOutlined,
+  EditOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import { type ColumnsType } from "antd/es/table";
 import type {
-  Enrollment,
-  Section,
   Student,
+  Course,
+  StudentEnrollment,
+  CreateStudentEnrollmentForm,
   Semester,
 } from "../../types/enrollment";
 import { enrollmentService } from "../../api/enrollmentService";
+import { AxiosError } from "axios";
+import { courseService } from "../../api/courseService";
 
 const { Step } = Steps;
 
-const StudentEnrollment: React.FC = () => {
+const StudentEnrollmentComponent: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [selectedSemester, setSelectedSemester] = useState<string>("");
-  const [selectedSections, setSelectedSections] = useState<string[]>([]);
-  const [searchText, setSearchText] = useState("");
-  const [studentDepartmentFilter, setStudentDepartmentFilter] =
-    useState<string>("");
-  const [studentYearLevelFilter, setStudentYearLevelFilter] =
-    useState<string>("");
   const [courseQuery, setCourseQuery] = useState("");
-  const [dayFilter, setDayFilter] = useState<string>("");
-  const [availabilityFilter, setAvailabilityFilter] = useState<string>("all");
   const [courseDepartmentFilter, setCourseDepartmentFilter] =
     useState<string>("");
   const [courseYearLevelFilter, setCourseYearLevelFilter] =
     useState<string>("");
 
+  // Selection states
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [selectedSemester, setSelectedSemester] = useState<Semester | null>(
+    null
+  );
+  const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
+
+  // Search and filter states
+  const [studentSearchText, setStudentSearchText] = useState("");
+  const [studentDepartmentFilter, setStudentDepartmentFilter] =
+    useState<string>("");
+  const [studentYearLevelFilter, setStudentYearLevelFilter] =
+    useState<string>("");
+
   // API Data States
-  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [studentEnrollments, setStudentEnrollments] = useState<
+    StudentEnrollment[]
+  >([]);
   const [students, setStudents] = useState<Student[]>([]);
-  const [sections, setSections] = useState<Section[]>([]);
   const [semesters, setSemesters] = useState<Semester[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
 
   // Loading States
   const [loading, setLoading] = useState(false);
-  const [enrollmentsLoading, setEnrollmentsLoading] = useState(false);
+  const [studentEnrollmentsLoading, setStudentEnrollmentsLoading] =
+    useState(false);
   const [studentsLoading, setStudentsLoading] = useState(false);
-  const [sectionsLoading, setSectionsLoading] = useState(false);
   const [semestersLoading, setSemestersLoading] = useState(false);
+  const [coursesLoading, setCoursesLoading] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -80,15 +93,35 @@ const StudentEnrollment: React.FC = () => {
     useState<string>("");
   const [enrollmentYearLevelFilter, setEnrollmentYearLevelFilter] =
     useState<string>("");
+
   // Edit modal for Current Enrollments
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingEnrollment, setEditingEnrollment] = useState<Enrollment | null>(
-    null
-  );
-  const [editingStatus, setEditingStatus] =
-    useState<Enrollment["status"]>("Enrolled");
-  const [editingGrade, setEditingGrade] = useState<string>("");
-  const [editingRemarks, setEditingRemarks] = useState<string>("");
+  const [editingStudentEnrollment, setEditingStudentEnrollment] =
+    useState<StudentEnrollment | null>(null);
+  
+  // View modal for Current Enrollments
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewingStudentEnrollment, setViewingStudentEnrollment] =
+    useState<StudentEnrollment | null>(null);
+  
+  // Edit form state
+  const [editFormData, setEditFormData] = useState<{
+    name: string;
+    studentNumber: string;
+    department: string;
+    yearLevel: string;
+    semester: string;
+    academicYear: string;
+    selectedCourses: string[];
+  }>({
+    name: "",
+    studentNumber: "",
+    department: "",
+    yearLevel: "1st Year",
+    semester: "",
+    academicYear: "",
+    selectedCourses: [],
+  });
 
   // Fetch all data on component mount
   useEffect(() => {
@@ -102,10 +135,10 @@ const StudentEnrollment: React.FC = () => {
     setError(null);
     try {
       await Promise.all([
-        fetchEnrollments(),
+        fetchStudentEnrollments(),
         fetchStudents(),
-        fetchSections(),
         fetchSemesters(),
+        fetchCourses(),
       ]);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -115,19 +148,19 @@ const StudentEnrollment: React.FC = () => {
     }
   };
 
-  // Fetch enrollments from API
-  const fetchEnrollments = async () => {
+  // Fetch student enrollments from API
+  const fetchStudentEnrollments = async () => {
     try {
-      setEnrollmentsLoading(true);
-      const data = await enrollmentService.getAllEnrollments();
-      console.log("Fetched enrollments:", data);
-      setEnrollments(data || []);
+      setStudentEnrollmentsLoading(true);
+      const data = await enrollmentService.getAllStudentEnrollments();
+      console.log("Fetched student enrollments:", data);
+      setStudentEnrollments(data || []);
     } catch (error) {
-      console.error("Error fetching enrollments:", error);
-      message.error("Failed to fetch enrollments");
-      setEnrollments([]);
+      console.error("Error fetching student enrollments:", error);
+      message.error("Failed to fetch student enrollments");
+      setStudentEnrollments([]);
     } finally {
-      setEnrollmentsLoading(false);
+      setStudentEnrollmentsLoading(false);
     }
   };
 
@@ -146,21 +179,6 @@ const StudentEnrollment: React.FC = () => {
     }
   };
 
-  // Fetch sections from API
-  const fetchSections = async () => {
-    try {
-      setSectionsLoading(true);
-      const data = await enrollmentService.getSections();
-      console.log("Fetched sections:", data);
-      setSections(data || []);
-    } catch (error) {
-      console.error("Error fetching sections:", error);
-      setSections([]);
-    } finally {
-      setSectionsLoading(false);
-    }
-  };
-
   // Fetch semesters from API
   const fetchSemesters = async () => {
     try {
@@ -176,6 +194,21 @@ const StudentEnrollment: React.FC = () => {
     }
   };
 
+  // Fetch courses from API
+  const fetchCourses = async () => {
+    try {
+      setCoursesLoading(true);
+      const data = await courseService.getAllCourses();
+      console.log("Fetched courses:", data);
+      setCourses(data || []);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+      setCourses([]);
+    } finally {
+      setCoursesLoading(false);
+    }
+  };
+
   // Unique filters from student data
   const uniqueDepartments = Array.from(
     new Set(students.map((s) => s.department))
@@ -188,13 +221,19 @@ const StudentEnrollment: React.FC = () => {
   const enrollmentUniqueDepartments = uniqueDepartments;
   const enrollmentUniqueYearLevels = uniqueYearLevels;
 
-  // Filter students based on search + department + year level
+  // Filter students for selection
   const filteredStudents = students.filter((student) => {
     const matchesSearch =
-      !searchText ||
-      student.firstName?.toLowerCase().includes(searchText.toLowerCase()) ||
-      student.lastName?.toLowerCase().includes(searchText.toLowerCase()) ||
-      student.studentNumber?.toLowerCase().includes(searchText.toLowerCase());
+      !studentSearchText ||
+      student.firstName
+        ?.toLowerCase()
+        .includes(studentSearchText.toLowerCase()) ||
+      student.lastName
+        ?.toLowerCase()
+        .includes(studentSearchText.toLowerCase()) ||
+      student.studentNumber
+        ?.toLowerCase()
+        .includes(studentSearchText.toLowerCase());
 
     const matchesDepartment =
       !studentDepartmentFilter ||
@@ -207,36 +246,34 @@ const StudentEnrollment: React.FC = () => {
   });
 
   // Get sections for selected semester
-  const availableSections = (sections || []).filter(
-    (section) =>
-      section.semesterId === selectedSemester &&
-      section.status === "Open" &&
-      section.currentEnrollment < section.maxCapacity
-  );
+  // const availableSections = (sections || []).filter(
+  //   (section) =>
+  //     section.semesterId === selectedSemester &&
+  //     section.status === "Open" &&
+  //     section.currentEnrollment < section.maxCapacity
+  // );
 
   // Fallback: if no available sections, show existing dummy sections
-  const fallbackSections = selectedSemester
-    ? (sections || []).filter(
-        (section) => section.semesterId === selectedSemester
-      )
-    : sections || [];
-  const displayedSections =
-    availableSections.length > 0 ? availableSections : fallbackSections;
+  // const fallbackSections = selectedSemester
+  //   ? (sections || []).filter(
+  //       (section) => section.semesterId === selectedSemester
+  //     )
+  //   : sections || [];
+  // const displayedSections =
+  //   availableSections.length > 0 ? availableSections : fallbackSections;
 
   // Derived filters for Select Courses step
-  const uniqueDays = Array.from(
-    new Set(
-      (sections || [])
-        .filter((s) => s?.schedule && Array.isArray(s.schedule))
-        .flatMap((s) => s.schedule.map((sched) => sched?.day).filter(Boolean))
-    )
-  );
+  // const uniqueDays = Array.from(
+  //   new Set(
+  //     (sections || [])
+  //       .filter((s) => s?.schedule && Array.isArray(s.schedule))
+  //       .flatMap((s) => s.schedule.map((sched) => sched?.day).filter(Boolean))
+  //   )
+  // );
 
   const uniqueCourseDepartments = Array.from(
     new Set(
-      (sections || [])
-        .filter((s) => s?.course?.department)
-        .map((s) => s.course.department)
+      (courses || []).filter((c) => c?.department).map((c) => c.department)
     )
   );
 
@@ -261,192 +298,176 @@ const StudentEnrollment: React.FC = () => {
     }
   };
 
-  // When student changes, default the course filters to their department and year
-  useEffect(() => {
-    if (selectedStudent) {
-      setCourseDepartmentFilter(selectedStudent.department);
-      setCourseYearLevelFilter(selectedStudent.yearLevel);
-    } else {
-      setCourseDepartmentFilter("");
-      setCourseYearLevelFilter("");
-    }
-  }, [selectedStudent]);
+  // Course filters remain empty by default - no auto-population from selected student
 
-  const filteredDisplayedSections = displayedSections.filter((section) => {
-    // Ensure section has required properties
-    if (!section || !section.course) {
-      return false;
-    }
+  // const filteredDisplayedSections = displayedSections.filter((section) => {
+  //   // Ensure section has required properties
+  //   if (!section || !section.course) {
+  //     return false;
+  //   }
 
-    const matchesText =
-      !courseQuery ||
-      section.sectionCode?.toLowerCase().includes(courseQuery.toLowerCase()) ||
-      section.sectionName?.toLowerCase().includes(courseQuery.toLowerCase()) ||
-      section.course.courseCode
-        ?.toLowerCase()
-        .includes(courseQuery.toLowerCase()) ||
-      section.course.courseName
-        ?.toLowerCase()
-        .includes(courseQuery.toLowerCase());
+  //   const matchesText =
+  //     !courseQuery ||
+  //     section.sectionCode?.toLowerCase().includes(courseQuery.toLowerCase()) ||
+  //     section.sectionName?.toLowerCase().includes(courseQuery.toLowerCase()) ||
+  //     section.course.courseCode
+  //       ?.toLowerCase()
+  //       .includes(courseQuery.toLowerCase()) ||
+  //     section.course.courseName
+  //       ?.toLowerCase()
+  //       .includes(courseQuery.toLowerCase());
 
-    const matchesDay =
-      !dayFilter ||
-      (section.schedule &&
-        Array.isArray(section.schedule) &&
-        section.schedule.some((sched) => sched?.day === dayFilter));
+  //   const matchesDay =
+  //     !dayFilter ||
+  //     (section.schedule &&
+  //       Array.isArray(section.schedule) &&
+  //       section.schedule.some((sched) => sched?.day === dayFilter));
 
-    const matchesAvailability =
-      availabilityFilter === "all"
-        ? true
-        : availabilityFilter === "open"
-        ? section.status === "Open" &&
-          section.currentEnrollment < section.maxCapacity
-        : availabilityFilter === "full"
-        ? section.currentEnrollment >= section.maxCapacity ||
-          section.status !== "Open"
-        : true;
+  //   const matchesAvailability =
+  //     availabilityFilter === "all"
+  //       ? true
+  //       : availabilityFilter === "open"
+  //       ? section.status === "Open" &&
+  //         section.currentEnrollment < section.maxCapacity
+  //       : availabilityFilter === "full"
+  //       ? section.currentEnrollment >= section.maxCapacity ||
+  //         section.status !== "Open"
+  //       : true;
 
-    const matchesDepartmentFilter =
-      !courseDepartmentFilter ||
-      section.course?.department === courseDepartmentFilter;
+  //   const matchesDepartmentFilter =
+  //     !courseDepartmentFilter ||
+  //     section.course?.department === courseDepartmentFilter;
 
-    const courseYearLevel = section.course?.courseCode
-      ? mapCourseCodeToYearLevel(section.course.courseCode)
-      : undefined;
-    const matchesYearLevelFilter =
-      !courseYearLevelFilter || courseYearLevelFilter === courseYearLevel;
+  //   const courseYearLevel = section.course?.courseCode
+  //     ? mapCourseCodeToYearLevel(section.course.courseCode)
+  //     : undefined;
+  //   const matchesYearLevelFilter =
+  //     !courseYearLevelFilter || courseYearLevelFilter === courseYearLevel;
 
-    return (
-      matchesText &&
-      matchesDay &&
-      matchesAvailability &&
-      matchesDepartmentFilter &&
-      matchesYearLevelFilter
-    );
-  });
+  //   return (
+  //     matchesText &&
+  //     matchesDay &&
+  //     matchesAvailability &&
+  //     matchesDepartmentFilter &&
+  //     matchesYearLevelFilter
+  //   );
+  // });
 
-  // Get enrolled sections for selected student and semester
-  const enrolledSections = enrollments.filter(
-    (enrollment) =>
-      enrollment.studentId === selectedStudent?.id &&
-      enrollment.semesterId === selectedSemester &&
-      enrollment.status === "Enrolled"
-  );
+  // // Get enrolled sections for selected student and semester
+  // const enrolledSections = enrollments.filter(
+  //   (enrollment) =>
+  //     enrollment.studentId === selectedStudent?.id &&
+  //     enrollment.semesterId === selectedSemester &&
+  //     enrollment.status === "Enrolled"
+  // );
 
-  // Filtering for Current Enrollments table
-  const filteredEnrollments = enrollments.filter((record) => {
+  // Filter courses based on search and department filters
+  const filteredCourses = courses.filter((course) => {
+    // Search filter - matches course code, course name, or description
     const matchesSearch =
-      !enrollmentSearchText ||
-      record.student?.firstName
-        ?.toLowerCase()
-        .includes(enrollmentSearchText.toLowerCase()) ||
-      record.student?.lastName
-        ?.toLowerCase()
-        .includes(enrollmentSearchText.toLowerCase()) ||
-      record.student?.studentNumber
-        ?.toLowerCase()
-        .includes(enrollmentSearchText.toLowerCase()) ||
-      record.section?.sectionCode
-        ?.toLowerCase()
-        .includes(enrollmentSearchText.toLowerCase()) ||
-      record.section?.sectionName
-        ?.toLowerCase()
-        .includes(enrollmentSearchText.toLowerCase());
+      !courseQuery ||
+      course.courseCode?.toLowerCase().includes(courseQuery.toLowerCase()) ||
+      course.courseName?.toLowerCase().includes(courseQuery.toLowerCase()) ||
+      course.description?.toLowerCase().includes(courseQuery.toLowerCase());
 
+    // Department filter
     const matchesDepartment =
-      !enrollmentDepartmentFilter ||
-      record.student?.department === enrollmentDepartmentFilter;
+      !courseDepartmentFilter || course.department === courseDepartmentFilter;
 
+    // Year level filter based on course code (e.g., 101 -> 1st Year)
+    const courseYearLevel = course.courseCode
+      ? mapCourseCodeToYearLevel(course.courseCode)
+      : undefined;
     const matchesYearLevel =
-      !enrollmentYearLevelFilter ||
-      record.student?.yearLevel === enrollmentYearLevelFilter;
+      !courseYearLevelFilter || courseYearLevelFilter === courseYearLevel;
 
     return matchesSearch && matchesDepartment && matchesYearLevel;
   });
 
-  const handleStudentSelect = (student: Student) => {
-    setSelectedStudent(student);
-    setCurrentStep(1);
-    setSelectedSections([]);
-  };
+  // Filtering for Current Student Enrollments table
+  const filteredStudentEnrollments = studentEnrollments.filter((record) => {
+    const matchesSearch =
+      !enrollmentSearchText ||
+      record.name?.toLowerCase().includes(enrollmentSearchText.toLowerCase()) ||
+      record.studentNumber
+        ?.toLowerCase()
+        .includes(enrollmentSearchText.toLowerCase()) ||
+      record.selectedCourses.some((course) =>
+        course.toLowerCase().includes(enrollmentSearchText.toLowerCase())
+      );
 
-  const handleSectionToggle = (sectionId: string) => {
-    setSelectedSections((prev) =>
-      prev.includes(sectionId)
-        ? prev.filter((id) => id !== sectionId)
-        : [...prev, sectionId]
+    const matchesDepartment =
+      !enrollmentDepartmentFilter ||
+      record.department === enrollmentDepartmentFilter;
+
+    const matchesYearLevel =
+      !enrollmentYearLevelFilter ||
+      record.yearLevel === enrollmentYearLevelFilter;
+
+    return matchesSearch && matchesDepartment && matchesYearLevel;
+  });
+
+  const handleCourseToggle = (course: Course) => {
+    const courseString = `${course.courseCode} - ${course.courseName} (${course.units} units)`;
+    setSelectedCourses((prev) =>
+      prev.includes(courseString)
+        ? prev.filter((c) => c !== courseString)
+        : [...prev, courseString]
     );
   };
 
+  const handleStudentSelect = (student: Student) => {
+    setSelectedStudent(student);
+    setCurrentStep(1);
+  };
+
+  const handleSemesterSelect = (semester: Semester) => {
+    setSelectedSemester(semester);
+    setCurrentStep(2);
+  };
+
   const handleEnrollStudent = async () => {
-    if (
-      !selectedStudent ||
-      !selectedSemester ||
-      selectedSections.length === 0
-    ) {
+    if (!selectedStudent || !selectedSemester || selectedCourses.length === 0) {
       message.error("Please complete all required selections");
       return;
     }
 
     setCreateLoading(true);
     try {
-      // Create enrollments for each selected section
-      const enrollmentPromises = selectedSections.map((sectionId) =>
-        enrollmentService.createEnrollment({
-          studentId: selectedStudent.id,
-          sectionId: sectionId,
-          semesterId: selectedSemester,
-          status: "Enrolled",
-        })
-      );
+      const enrollmentData: CreateStudentEnrollmentForm = {
+        name: `${selectedStudent.firstName} ${selectedStudent.lastName}`,
+        studentNumber: selectedStudent.schoolId,
+        department: selectedStudent.department,
+        yearLevel: selectedStudent.yearLevel,
+        semester: selectedSemester.semesterName,
+        academicYear: selectedSemester.academicYear,
+        selectedCourses: selectedCourses,
+      };
 
-      await Promise.all(enrollmentPromises);
+      await enrollmentService.createStudentEnrollment(enrollmentData);
 
       message.success(
-        `Successfully enrolled ${selectedStudent.firstName} ${selectedStudent.lastName} in ${selectedSections.length} section(s)`
+        `Successfully enrolled ${selectedStudent.firstName} ${selectedStudent.lastName} in ${selectedCourses.length} course(s)`
       );
 
-      // Refresh enrollments data
-      await fetchEnrollments();
+      // Refresh student enrollments data
+      await fetchStudentEnrollments();
 
-      // Reset form
+      // Reset selections
       setSelectedStudent(null);
-      setSelectedSemester("");
-      setSelectedSections([]);
+      setSelectedSemester(null);
+      setSelectedCourses([]);
       setCurrentStep(0);
       setIsModalOpen(false);
     } catch (error) {
-      console.error("Error creating enrollments:", error);
-      message.error("Failed to create enrollments. Please try again.");
+      console.error("Error creating student enrollment:", error);
+      message.error("Failed to create enrollment. Please try again.");
     } finally {
       setCreateLoading(false);
     }
   };
 
-  const handleRemoveEnrollment = (enrollmentId: string) => {
-    Modal.confirm({
-      title: "Remove Enrollment",
-      content: "Are you sure you want to remove this enrollment?",
-      okText: "Yes, Remove",
-      okType: "danger",
-      async onOk() {
-        setDeleteLoading(true);
-        try {
-          await enrollmentService.deleteEnrollment(enrollmentId);
-          message.success("Enrollment removed successfully");
-
-          // Refresh enrollments data
-          await fetchEnrollments();
-        } catch (error) {
-          console.error("Error deleting enrollment:", error);
-          message.error("Failed to delete enrollment. Please try again.");
-        } finally {
-          setDeleteLoading(false);
-        }
-      },
-    });
-  };
-
+  // Student selection table columns
   const studentColumns: ColumnsType<Student> = [
     {
       title: "Student",
@@ -500,82 +521,91 @@ const StudentEnrollment: React.FC = () => {
     },
   ];
 
-  const sectionColumns: ColumnsType<Section> = [
+  const handleRemoveStudentEnrollment = (enrollmentId: string) => {
+    Modal.confirm({
+      title: "Remove Enrollment",
+      content: "Are you sure you want to remove this enrollment?",
+      okText: "Yes, Remove",
+      okType: "danger",
+      async onOk() {
+        setDeleteLoading(true);
+        try {
+          await enrollmentService.deleteStudentEnrollment(enrollmentId);
+          message.success("Enrollment removed successfully");
+
+          // Refresh student enrollments data
+          await fetchStudentEnrollments();
+        } catch (error) {
+          console.error("Error deleting enrollment:", error);
+          message.error("Failed to delete enrollment. Please try again.");
+        } finally {
+          setDeleteLoading(false);
+        }
+      },
+    });
+  };
+
+  const courseColumns: ColumnsType<Course> = [
     {
-      title: "Section",
-      key: "section",
+      title: "Course Code",
+      key: "courseCode",
       render: (_, record) => (
         <Space>
           <BookOutlined className="text-purple-500" />
           <div>
-            <div className="font-medium">{record.sectionCode}</div>
-            <div className="text-sm text-gray-500">{record.sectionName}</div>
+            <div className="font-medium">{record.courseCode}</div>
           </div>
         </Space>
       ),
     },
     {
-      title: "Course",
-      key: "course",
+      title: "Course Name",
+      key: "courseName",
       render: (_, record) => (
         <div>
-          <div className="font-medium">
-            {record.course?.courseCode || "N/A"}
-          </div>
+          <div className="font-medium">{record.courseName}</div>
           <div className="text-sm text-gray-500">
-            {record.course?.courseName || "N/A"}
-          </div>
-          <div className="text-xs text-gray-400">
-            {record.course?.units || 0} units
+            {record.description || "No description"}
           </div>
         </div>
       ),
     },
     {
-      title: "Schedule",
-      key: "schedule",
-      render: (_, record) => (
-        <div className="text-sm">
-          {(record.schedule || []).map((sched, index) => (
-            <div key={index} className="text-xs">
-              {sched?.day || "N/A"} {sched?.startTime || ""}-
-              {sched?.endTime || ""}
-              {sched?.room && ` (${sched.room})`}
-            </div>
-          ))}
-          {(!record.schedule || record.schedule.length === 0) && (
-            <div className="text-xs text-gray-400">No schedule available</div>
-          )}
-        </div>
-      ),
-    },
-    {
-      title: "Instructor",
-      key: "instructor",
-      render: (_, record) =>
-        record.instructor ? (
-          <div>
-            <div className="font-medium">{record.instructor.name}</div>
-            <div className="text-sm text-gray-500">
-              {record.instructor.email}
-            </div>
-          </div>
-        ) : (
-          <span className="text-gray-400">Not assigned</span>
-        ),
-    },
-    {
-      title: "Availability",
-      key: "availability",
+      title: "Units",
+      key: "units",
+      width: 80,
+      align: "center" as const,
       render: (_, record) => (
         <div className="text-center">
-          <div className="font-medium">
-            {record.currentEnrollment}/{record.maxCapacity}
-          </div>
-          <div className="text-xs text-gray-500">
-            {Math.round((record.currentEnrollment / record.maxCapacity) * 100)}%
-            full
-          </div>
+          <Tag color="blue">{record.units}</Tag>
+        </div>
+      ),
+    },
+    {
+      title: "Department",
+      key: "department",
+      render: (_, record) => <Tag color="green">{record.department}</Tag>,
+    },
+    {
+      title: "Prerequisites",
+      key: "prerequisites",
+      render: (_, record) => (
+        <div className="text-sm">
+          {record.prerequisites && record.prerequisites.length > 0 ? (
+            record.prerequisites.map((prereqId, index) => {
+              // Find the course by ID to get the course code
+              const prereqCourse = courses.find(
+                (course) => course.id === prereqId
+              );
+              return (
+                <Tag key={index} color="red" className="mb-1">
+                  {prereqCourse ? prereqCourse.courseCode : prereqId}
+                </Tag>
+              );
+            })
+          ) : (
+            <span className="text-gray-400">None</span>
+          )}
         </div>
       ),
     },
@@ -583,29 +613,25 @@ const StudentEnrollment: React.FC = () => {
       title: "Actions",
       key: "actions",
       render: (_, record) => {
-        const isSelected = selectedSections.includes(record.id);
-        const isEnrolled = enrolledSections.some(
-          (e) => e.sectionId === record.id
-        );
+        const courseString = `${record.courseCode} - ${record.courseName} (${record.units} units)`;
+        const isSelected = selectedCourses.includes(courseString);
 
         return (
           <Button
             type={isSelected ? "primary" : "default"}
             danger={isSelected}
             icon={isSelected ? <MinusOutlined /> : <PlusOutlined />}
-            onClick={() => handleSectionToggle(record.id)}
-            disabled={
-              isEnrolled || record.currentEnrollment >= record.maxCapacity
-            }
+            onClick={() => handleCourseToggle(record)}
           >
-            {isSelected ? "Remove" : isEnrolled ? "Enrolled" : "Add"}
+            {isSelected ? "Remove" : "Add"}
           </Button>
         );
       },
     },
   ];
 
-  const enrollmentColumns: ColumnsType<Enrollment> = [
+  // New StudentEnrollment table columns
+  const studentEnrollmentColumns: ColumnsType<StudentEnrollment> = [
     {
       title: "Student",
       key: "student",
@@ -613,82 +639,69 @@ const StudentEnrollment: React.FC = () => {
         <Space>
           <UserOutlined className="text-blue-500" />
           <div>
-            <div className="font-medium">
-              {record.student?.firstName} {record.student?.lastName}
-            </div>
+            <div className="font-medium">{record.name}</div>
             <div className="text-sm text-gray-500">
-              {record.student?.schoolId || "N/A"}
+              {record.studentNumber || "N/A"}
             </div>
           </div>
         </Space>
       ),
     },
     {
-      title: "Section",
-      key: "section",
-      render: (_, record) => (
-        <div>
-          <div className="font-medium">
-            {record.section?.sectionCode || "N/A"}
-          </div>
-          <div className="text-sm text-gray-500">
-            {record.section?.sectionName || "N/A"}
-          </div>
-        </div>
-      ),
+      title: "Department",
+      dataIndex: "department",
+      key: "department",
+      render: (department: string) => <Tag color="blue">{department}</Tag>,
+    },
+    {
+      title: "Year Level",
+      dataIndex: "yearLevel",
+      key: "yearLevel",
+      render: (yearLevel: string) => <Tag color="green">{yearLevel}</Tag>,
     },
     {
       title: "Semester",
       key: "semester",
       render: (_, record) => (
         <div>
-          <div className="font-medium">
-            {record.semester?.semesterName || "N/A"}
-          </div>
-          <div className="text-sm text-gray-500">
-            {record.semester?.academicYear || "N/A"}
-          </div>
+          <div className="font-medium">{record.semester}</div>
+          <div className="text-sm text-gray-500">{record.academicYear}</div>
         </div>
       ),
     },
     {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status: string) => {
-        const color =
-          status === "Enrolled"
-            ? "green"
-            : status === "Dropped"
-            ? "red"
-            : status === "Withdrawn"
-            ? "orange"
-            : status === "Completed"
-            ? "blue"
-            : "default";
-        return <Tag color={color}>{status}</Tag>;
-      },
-    },
-    {
-      title: "Grade",
-      dataIndex: "grade",
-      key: "grade",
-      render: (grade: string) => grade || "N/A",
-    },
-    {
-      title: "Remarks",
-      dataIndex: "remarks",
-      key: "remarks",
-      render: (remarks: string) => (
-        <div className="max-w-xs truncate" title={remarks}>
-          {remarks || "N/A"}
+      title: "Courses",
+      key: "courses",
+      render: (_, record) => (
+        <div className="max-w-xs">
+          {record.selectedCourses.slice(0, 2).map((course, index) => (
+            <Tag key={index} color="purple" className="mb-1 text-xs">
+              {course.split(" - ")[0]}
+            </Tag>
+          ))}
+          {record.selectedCourses.length > 2 && (
+            <Tag color="default" className="text-xs">
+              +{record.selectedCourses.length - 2} more
+            </Tag>
+          )}
         </div>
       ),
     },
     {
-      title: "Enrollment Date",
-      dataIndex: "enrollmentDate",
-      key: "enrollmentDate",
+      title: "Total Units",
+      dataIndex: "totalUnits",
+      key: "totalUnits",
+      align: "center" as const,
+      render: (units: number) => (
+        <Tag color="orange" className="font-medium">
+          {units} units
+        </Tag>
+      ),
+    },
+    {
+      title: "Created Date",
+      dataIndex: "createdAt",
+      key: "createdAt",
       render: (date: string) =>
         date ? new Date(date).toLocaleDateString() : "N/A",
     },
@@ -698,23 +711,44 @@ const StudentEnrollment: React.FC = () => {
       render: (_, record) => (
         <Space>
           <Button
-            type="default"
+            type="link"
+            icon={<EyeOutlined />}
             onClick={() => {
-              setEditingEnrollment(record);
-              setEditingStatus(record.status);
-              setEditingGrade(record.grade || "");
-              setEditingRemarks(record.remarks || "");
+              setViewingStudentEnrollment(record);
+              setIsViewModalOpen(true);
+            }}
+            title="View Details"
+          >
+            View
+          </Button>
+          <Button
+            type="default"
+            icon={<EditOutlined />}
+            onClick={() => {
+              setEditingStudentEnrollment(record);
+              setEditFormData({
+                name: record.name,
+                studentNumber: record.studentNumber || "",
+                department: record.department,
+                yearLevel: record.yearLevel,
+                semester: record.semester,
+                academicYear: record.academicYear,
+                selectedCourses: [...record.selectedCourses],
+              });
               setIsEditModalOpen(true);
             }}
             loading={updateLoading}
+            title="Edit Enrollment"
           >
             Edit
           </Button>
           <Button
             type="text"
             danger
-            onClick={() => handleRemoveEnrollment(record.id)}
+            icon={<DeleteOutlined />}
+            onClick={() => handleRemoveStudentEnrollment(record.id)}
             loading={deleteLoading}
+            title="Remove Enrollment"
           >
             Remove
           </Button>
@@ -822,10 +856,10 @@ const StudentEnrollment: React.FC = () => {
             }))}
           />
         </div>
-        <Spin spinning={enrollmentsLoading}>
+        <Spin spinning={studentEnrollmentsLoading}>
           <Table
-            columns={enrollmentColumns}
-            dataSource={filteredEnrollments}
+            columns={studentEnrollmentColumns}
+            dataSource={filteredStudentEnrollments}
             rowKey="id"
             pagination={{
               pageSize: 10,
@@ -847,8 +881,8 @@ const StudentEnrollment: React.FC = () => {
           setIsModalOpen(false);
           setCurrentStep(0);
           setSelectedStudent(null);
-          setSelectedSemester("");
-          setSelectedSections([]);
+          setSelectedSemester(null);
+          setSelectedCourses([]);
         }}
         width={1000}
         footer={[
@@ -868,7 +902,7 @@ const StudentEnrollment: React.FC = () => {
               disabled={
                 (currentStep === 0 && !selectedStudent) ||
                 (currentStep === 1 && !selectedSemester) ||
-                (currentStep === 2 && selectedSections.length === 0)
+                (currentStep === 2 && selectedCourses.length === 0)
               }
             >
               Next
@@ -898,12 +932,13 @@ const StudentEnrollment: React.FC = () => {
 
         {currentStep === 0 && (
           <div>
+            <h4 className="font-medium mb-4">Select Student:</h4>
             <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
               <Input
                 placeholder="Search students..."
                 prefix={<SearchOutlined />}
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
+                value={studentSearchText}
+                onChange={(e) => setStudentSearchText(e.target.value)}
                 allowClear
               />
               <Select
@@ -943,22 +978,22 @@ const StudentEnrollment: React.FC = () => {
         )}
 
         {currentStep === 1 && (
-          <div className="mt-5">
+          <div>
             <h4 className="font-medium mb-4">Select Semester:</h4>
             <Spin spinning={semestersLoading}>
-              <div className="space-y-2 mt-5">
+              <div className="space-y-2">
                 {semesters.map((semester) => (
                   <Card
                     key={semester.id}
                     hoverable
-                    className={`cursor-pointer mt-5 ${
-                      selectedSemester === semester.id
+                    className={`cursor-pointer ${
+                      selectedSemester?.id === semester.id
                         ? "border-blue-500 bg-blue-50"
                         : ""
                     }`}
-                    onClick={() => setSelectedSemester(semester.id)}
+                    onClick={() => handleSemesterSelect(semester)}
                   >
-                    <div className="flex justify-between items-center mt-5">
+                    <div className="flex justify-between items-center">
                       <div>
                         <div className="font-medium">
                           {semester.semesterName}
@@ -1004,21 +1039,16 @@ const StudentEnrollment: React.FC = () => {
             <h4 className="font-medium mb-4">Select Courses:</h4>
             <div className="mb-4">
               <Tag color="blue">
-                Selected: {selectedSections.length} section(s)
+                Selected: {selectedCourses.length} course(s)
               </Tag>
-              {availableSections.length === 0 && (
-                <Tag color="orange" className="ml-2">
-                  No open sections found. Showing existing sections.
-                </Tag>
-              )}
-              {selectedSections.length > 0 && (
+              {selectedCourses.length > 0 && (
                 <Tag color="green" className="ml-2">
                   Total Units:{" "}
-                  {selectedSections.reduce((total, sectionId) => {
-                    const section = (sections || []).find(
-                      (s) => s.id === sectionId
+                  {selectedCourses.reduce((total, courseString) => {
+                    const unitsMatch = courseString.match(/\((\d+)\s+units?\)/);
+                    return (
+                      total + (unitsMatch ? parseInt(unitsMatch[1], 10) : 0)
                     );
-                    return total + (section?.course?.units || 0);
                   }, 0)}
                 </Tag>
               )}
@@ -1031,23 +1061,6 @@ const StudentEnrollment: React.FC = () => {
                 value={courseQuery}
                 onChange={(e) => setCourseQuery(e.target.value)}
                 allowClear
-              />
-              <Select
-                placeholder="Filter by day"
-                value={dayFilter || undefined}
-                onChange={(val) => setDayFilter(val || "")}
-                allowClear
-                options={uniqueDays.map((d) => ({ label: d, value: d }))}
-              />
-              <Select
-                placeholder="Availability"
-                value={availabilityFilter}
-                onChange={(val) => setAvailabilityFilter(val)}
-                options={[
-                  { label: "All", value: "all" },
-                  { label: "Open only", value: "open" },
-                  { label: "Full/Closed", value: "full" },
-                ]}
               />
               <Select
                 placeholder="Department"
@@ -1067,10 +1080,10 @@ const StudentEnrollment: React.FC = () => {
                 options={uniqueYearLevels.map((y) => ({ label: y, value: y }))}
               />
             </div>
-            <Spin spinning={sectionsLoading}>
+            <Spin spinning={coursesLoading}>
               <Table
-                columns={sectionColumns}
-                dataSource={filteredDisplayedSections}
+                columns={courseColumns}
+                dataSource={filteredCourses}
                 rowKey="id"
                 pagination={{ pageSize: 5 }}
                 size="small"
@@ -1091,7 +1104,7 @@ const StudentEnrollment: React.FC = () => {
                 </p>
                 <p>
                   <strong>Student Number:</strong>{" "}
-                  {selectedStudent?.studentNumber}
+                  {selectedStudent?.schoolId || "N/A"}
                 </p>
                 <p>
                   <strong>Department:</strong> {selectedStudent?.department}
@@ -1102,52 +1115,50 @@ const StudentEnrollment: React.FC = () => {
               </Card>
 
               <Card>
-                <h5 className="font-medium mb-2">Semester:</h5>
+                <h5 className="font-medium mb-2">Academic Details:</h5>
                 <p>
-                  {
-                    semesters.find((s) => s.id === selectedSemester)
-                      ?.semesterName
-                  }
+                  <strong>Semester:</strong> {selectedSemester?.semesterName}
+                </p>
+                <p>
+                  <strong>Academic Year:</strong>{" "}
+                  {selectedSemester?.academicYear}
                 </p>
               </Card>
 
               <Card>
                 <h5 className="font-medium mb-2">Selected Courses:</h5>
                 <div className="space-y-2">
-                  {selectedSections.map((sectionId) => {
-                    const section = (sections || []).find(
-                      (s) => s.id === sectionId
-                    );
-                    return section ? (
-                      <div
-                        key={sectionId}
-                        className="flex justify-between items-center p-2 bg-gray-50 rounded"
-                      >
-                        <div>
-                          <div className="font-medium">
-                            {section.sectionCode} -{" "}
-                            {section.course?.courseName || "N/A"}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {section.course?.units || 0} units
-                          </div>
+                  {selectedCourses.map((courseString, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center p-2 bg-gray-50 rounded"
+                    >
+                      <div>
+                        <div className="font-medium">
+                          {courseString.split(" (")[0]}
                         </div>
-                        <Tag color="blue">
-                          {section.course?.units || 0} units
-                        </Tag>
+                        <div className="text-sm text-gray-500">
+                          {courseString.match(/\((\d+)\s+units?\)/)?.[0] ||
+                            "N/A"}
+                        </div>
                       </div>
-                    ) : null;
-                  })}
+                      <Tag color="blue">
+                        {courseString.match(/\((\d+)\s+units?\)/)?.[1] || 0}{" "}
+                        units
+                      </Tag>
+                    </div>
+                  ))}
                 </div>
                 <Divider />
                 <div className="flex justify-between items-center font-medium">
                   <span>Total Units:</span>
                   <span className="text-blue-600">
-                    {selectedSections.reduce((total, sectionId) => {
-                      const section = (sections || []).find(
-                        (s) => s.id === sectionId
+                    {selectedCourses.reduce((total, courseString) => {
+                      const unitsMatch =
+                        courseString.match(/\((\d+)\s+units?\)/);
+                      return (
+                        total + (unitsMatch ? parseInt(unitsMatch[1], 10) : 0)
                       );
-                      return total + (section?.course?.units || 0);
                     }, 0)}
                   </span>
                 </div>
@@ -1156,79 +1167,278 @@ const StudentEnrollment: React.FC = () => {
           </div>
         )}
       </Modal>
-      {/* Edit Enrollment Modal */}
+      {/* View Student Enrollment Modal */}
       <Modal
-        title="Edit Enrollment"
+        title="View Student Enrollment"
+        open={isViewModalOpen}
+        onCancel={() => {
+          setIsViewModalOpen(false);
+          setViewingStudentEnrollment(null);
+        }}
+        footer={[
+          <Button key="close" onClick={() => setIsViewModalOpen(false)}>
+            Close
+          </Button>,
+        ]}
+        width={800}
+      >
+        {viewingStudentEnrollment && (
+          <div className="space-y-4">
+            <Card>
+              <h5 className="font-medium mb-3">Student Information</h5>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500">Name</p>
+                  <p className="font-medium">{viewingStudentEnrollment.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Student Number</p>
+                  <p className="font-medium">
+                    {viewingStudentEnrollment.studentNumber || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Department</p>
+                  <p className="font-medium">{viewingStudentEnrollment.department}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Year Level</p>
+                  <p className="font-medium">{viewingStudentEnrollment.yearLevel}</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card>
+              <h5 className="font-medium mb-3">Academic Information</h5>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500">Semester</p>
+                  <p className="font-medium">{viewingStudentEnrollment.semester}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Academic Year</p>
+                  <p className="font-medium">{viewingStudentEnrollment.academicYear}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Total Units</p>
+                  <p className="font-medium">
+                    <Tag color="orange">{viewingStudentEnrollment.totalUnits} units</Tag>
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Enrollment Date</p>
+                  <p className="font-medium">
+                    {new Date(viewingStudentEnrollment.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            </Card>
+
+            <Card>
+              <h5 className="font-medium mb-3">Enrolled Courses</h5>
+              <div className="space-y-2">
+                {viewingStudentEnrollment.selectedCourses.map((courseString, index) => {
+                  const courseParts = courseString.split(" - ");
+                  const courseCode = courseParts[0];
+                  const courseName = courseParts[1]?.split(" (")[0];
+                  const unitsMatch = courseString.match(/\((\d+)\s+units?\)/);
+                  const units = unitsMatch ? unitsMatch[1] : "0";
+                  
+                  return (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+                    >
+                      <div>
+                        <div className="font-medium text-blue-600">{courseCode}</div>
+                        <div className="text-sm text-gray-600">{courseName}</div>
+                      </div>
+                      <Tag color="blue">{units} units</Tag>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          </div>
+        )}
+      </Modal>
+
+      {/* Edit Student Enrollment Modal */}
+      <Modal
+        title="Update Student Courses"
         open={isEditModalOpen}
         onCancel={() => {
           setIsEditModalOpen(false);
-          setEditingEnrollment(null);
+          setEditingStudentEnrollment(null);
         }}
         onOk={async () => {
-          if (!editingEnrollment) return;
+          if (!editingStudentEnrollment) return;
+
+          // Validate required fields - only validate selected courses for admin update
+          if (!editFormData.selectedCourses || editFormData.selectedCourses.length === 0) {
+            message.error("At least one course must be selected");
+            return;
+          }
 
           setUpdateLoading(true);
           try {
-            await enrollmentService.updateEnrollment(editingEnrollment.id, {
-              status: editingStatus,
-              grade: editingGrade,
-              remarks: editingRemarks,
-            });
+            // Admin can only update selected courses
+            const updateData = {
+              selectedCourses: editFormData.selectedCourses,
+            };
 
-            message.success("Enrollment updated successfully");
+            await enrollmentService.updateStudentEnrollment(
+              editingStudentEnrollment.id,
+              updateData
+            );
 
-            // Refresh enrollments data
-            await fetchEnrollments();
-
+            message.success("Student courses updated successfully");
+            await fetchStudentEnrollments();
             setIsEditModalOpen(false);
-            setEditingEnrollment(null);
-            setEditingStatus("Enrolled");
-            setEditingGrade("");
-            setEditingRemarks("");
-          } catch (error) {
-            console.error("Error updating enrollment:", error);
-            message.error("Failed to update enrollment. Please try again.");
+            setEditingStudentEnrollment(null);
+          } catch (error: unknown) {
+            console.error("Error updating student enrollment:", error);
+            
+            // Provide more specific error messages
+            let errorMessage = "Failed to update courses. Please try again.";
+            
+            if (error instanceof AxiosError) {
+              if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+              } else if (error.response?.status === 500) {
+                errorMessage = "Server error occurred. Please check the data and try again.";
+              } else if (error.response?.status === 404) {
+                errorMessage = "Enrollment not found. It may have been deleted.";
+              } else if (error.response?.status === 400) {
+                errorMessage = "Invalid data provided. Please check your inputs.";
+              }
+            }
+            
+            message.error(errorMessage);
           } finally {
             setUpdateLoading(false);
           }
         }}
-        okText="Save"
+        okText="Save Changes"
         confirmLoading={updateLoading}
+        width={800}
       >
         <div className="space-y-4">
-          <div>
-            <div className="text-sm text-gray-500 mb-1">Status</div>
-            <Select
-              value={editingStatus}
-              onChange={(val) => setEditingStatus(val)}
-              options={[
-                { label: "Enrolled", value: "Enrolled" },
-                { label: "Dropped", value: "Dropped" },
-                { label: "Withdrawn", value: "Withdrawn" },
-                { label: "Completed", value: "Completed" },
-              ]}
-              style={{ width: "100%" }}
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Student Name (Read-only)</label>
+              <Input
+                value={editFormData.name}
+                disabled
+                placeholder="Enter student name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Student Number (Read-only)</label>
+              <Input
+                value={editFormData.studentNumber}
+                disabled
+                placeholder="Enter student number"
+              />
+            </div>
           </div>
-          <div>
-            <div className="text-sm text-gray-500 mb-1">Grade</div>
-            <Input
-              value={editingGrade}
-              onChange={(e) => setEditingGrade(e.target.value)}
-              placeholder="Enter grade (e.g., A, B+, 85, etc.)"
-              maxLength={10}
-            />
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Department (Read-only)</label>
+              <Select
+                value={editFormData.department}
+                disabled
+                style={{ width: "100%" }}
+                options={uniqueDepartments.map((d) => ({ label: d, value: d }))}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Year Level (Read-only)</label>
+              <Select
+                value={editFormData.yearLevel}
+                disabled
+                style={{ width: "100%" }}
+                options={[
+                  { label: "1st Year", value: "1st Year" },
+                  { label: "2nd Year", value: "2nd Year" },
+                  { label: "3rd Year", value: "3rd Year" },
+                  { label: "4th Year", value: "4th Year" },
+                  { label: "5th Year", value: "5th Year" },
+                ]}
+              />
+            </div>
           </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Semester (Read-only)</label>
+              <Input
+                value={editFormData.semester}
+                disabled
+                placeholder="Enter semester"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Academic Year (Read-only)</label>
+              <Input
+                value={editFormData.academicYear}
+                disabled
+                placeholder="Enter academic year"
+              />
+            </div>
+          </div>
+
           <div>
-            <div className="text-sm text-gray-500 mb-1">Remarks</div>
-            <Input.TextArea
-              value={editingRemarks}
-              onChange={(e) => setEditingRemarks(e.target.value)}
-              placeholder="Enter any remarks or notes"
-              rows={3}
-              maxLength={500}
-              showCount
-            />
+            <label className="block text-sm font-medium mb-2">Selected Courses</label>
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {editFormData.selectedCourses.map((courseString, index) => {
+                const courseParts = courseString.split(" - ");
+                const courseCode = courseParts[0];
+                const courseName = courseParts[1]?.split(" (")[0];
+                const unitsMatch = courseString.match(/\((\d+)\s+units?\)/);
+                const units = unitsMatch ? unitsMatch[1] : "0";
+                
+                return (
+                  <div
+                    key={index}
+                    className="flex justify-between items-center p-2 bg-gray-50 rounded"
+                  >
+                    <div>
+                      <div className="font-medium">{courseCode}</div>
+                      <div className="text-sm text-gray-500">{courseName}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Tag color="blue">{units} units</Tag>
+                      <Button
+                        type="text"
+                        danger
+                        size="small"
+                        icon={<MinusOutlined />}
+                        onClick={() => {
+                          const newCourses = editFormData.selectedCourses.filter(
+                            (_, i) => i !== index
+                          );
+                          setEditFormData({
+                            ...editFormData,
+                            selectedCourses: newCourses,
+                          });
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-2">
+              <Tag color="green">
+                Total Units:{" "}
+                {editFormData.selectedCourses.reduce((total, courseString) => {
+                  const unitsMatch = courseString.match(/\((\d+)\s+units?\)/);
+                  return total + (unitsMatch ? parseInt(unitsMatch[1], 10) : 0);
+                }, 0)}
+              </Tag>
+            </div>
           </div>
         </div>
       </Modal>
@@ -1236,4 +1446,4 @@ const StudentEnrollment: React.FC = () => {
   );
 };
 
-export default StudentEnrollment;
+export default StudentEnrollmentComponent;

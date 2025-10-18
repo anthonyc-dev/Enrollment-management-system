@@ -28,6 +28,7 @@ export interface Course {
   units: number;
   department: string;
   prerequisites?: string[];
+  status?: "Active" | "Inactive";
   dateCreated: string;
   dateUpdated: string;
 }
@@ -58,7 +59,7 @@ export interface Section {
   }[];
   maxCapacity: number;
   currentEnrollment: number;
-  department: string;
+  department?: string;
   semesterId: string;
   status: "Open" | "Closed" | "Cancelled";
   dateCreated: string;
@@ -69,9 +70,9 @@ export interface Semester {
   id: string;
   semesterName: string;
   academicYear: string;
-  semesterType: "FIRST" | "SECOND" | "SUMMER";
-  semesterDuration: string;
-  enrollmentPeriod: string;
+  semesterType: "FIRST" | "SECOND" | "SUMMER" | "1st Semester" | "2nd Semester";
+  semesterDuration?: string;
+  enrollmentPeriod?: string;
   startDate?: string;
   endDate?: string;
   enrollmentStartDate?: string;
@@ -82,7 +83,8 @@ export interface Semester {
     | "completed"
     | "Active"
     | "Inactive"
-    | "Completed";
+    | "Completed"
+    | "Upcoming";
   dateCreated: string;
   dateUpdated: string;
 }
@@ -231,6 +233,41 @@ export interface EnrollmentFilters {
 }
 
 // Statistics Types
+// Student Enrollment Interface (matches API data structure)
+export interface StudentEnrollment {
+  id: string;
+  name: string;
+  studentNumber?: string;
+  department: string;
+  yearLevel: string;
+  semester: string;
+  academicYear: string;
+  selectedCourses: string[];
+  totalUnits: number;
+  createdAt: string;
+}
+
+// Form types for StudentEnrollment
+export interface CreateStudentEnrollmentForm {
+  name: string;
+  studentNumber?: string;
+  department: string;
+  yearLevel: string;
+  semester: string;
+  academicYear: string;
+  selectedCourses: string[];
+}
+
+export interface UpdateStudentEnrollmentForm {
+  name?: string;
+  studentNumber?: string;
+  department?: string;
+  yearLevel?: string;
+  semester?: string;
+  academicYear?: string;
+  selectedCourses?: string[];
+}
+
 export interface EnrollmentStats {
   totalStudents: number;
   totalCourses: number;

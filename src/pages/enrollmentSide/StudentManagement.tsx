@@ -562,7 +562,7 @@ const StudentManagement: React.FC = () => {
         width={600}
         destroyOnHidden
       >
-        <Form form={form} layout="vertical">
+        <Form form={form} layout="vertical" preserve={false}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Form.Item
               name="schoolId"

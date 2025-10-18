@@ -1,9 +1,13 @@
 import axios from "./axios";
+import { AxiosError } from "axios";
 import type {
   Enrollment,
   Student,
   Section,
   Semester,
+  StudentEnrollment,
+  CreateStudentEnrollmentForm,
+  UpdateStudentEnrollmentForm,
 } from "../types/enrollment";
 
 // Base URL for enrollment endpoints
@@ -28,7 +32,7 @@ export const enrollmentService = {
         console.warn("Unexpected response format:", response.data);
         return [];
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error fetching enrollments:", error);
       throw error;
     }
@@ -62,8 +66,12 @@ export const enrollmentService = {
       console.log("createEnrollment response:", response.data);
 
       return response.data.data || response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error creating enrollment:", error);
+      if (error instanceof AxiosError && error.response) {
+        console.error("Server response:", error.response.data);
+        console.error("Status code:", error.response.status);
+      }
       throw error;
     }
   },
@@ -91,8 +99,12 @@ export const enrollmentService = {
       console.log("updateEnrollment response:", response.data);
 
       return response.data.data || response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error updating enrollment:", error);
+      if (error instanceof AxiosError && error.response) {
+        console.error("Server response:", error.response.data);
+        console.error("Status code:", error.response.status);
+      }
       throw error;
     }
   },
@@ -105,8 +117,12 @@ export const enrollmentService = {
         `${ENROLLMENT_BASE_URL}/deleteEnrollment/${id}`
       );
       console.log("deleteEnrollment response:", response.data);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error deleting enrollment:", error);
+      if (error instanceof AxiosError && error.response) {
+        console.error("Server response:", error.response.data);
+        console.error("Status code:", error.response.status);
+      }
       throw error;
     }
   },
@@ -125,7 +141,7 @@ export const enrollmentService = {
         console.warn("Unexpected students response format:", response.data);
         return [];
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error fetching students:", error);
       // Return empty array as fallback
       return [];
@@ -146,7 +162,7 @@ export const enrollmentService = {
         console.warn("Unexpected sections response format:", response.data);
         return [];
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error fetching sections:", error);
       // Return empty array as fallback
       return [];
@@ -167,10 +183,127 @@ export const enrollmentService = {
         console.warn("Unexpected semesters response format:", response.data);
         return [];
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error fetching semesters:", error);
       // Return empty array as fallback
       return [];
+    }
+  },
+
+  // StudentEnrollment CRUD Methods
+  // Get all student enrollments
+  getAllStudentEnrollments: async (): Promise<StudentEnrollment[]> => {
+    try {
+      const response = await axios.get(`${ENROLLMENT_BASE_URL}/getAllEnrollments`);
+      console.log("getAllStudentEnrollments response:", response.data);
+
+      // Handle different response formats
+      if (Array.isArray(response.data)) {
+        return response.data;
+      } else if (response.data.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      } else {
+        console.warn("Unexpected response format:", response.data);
+        return [];
+      }
+    } catch (error: unknown) {
+      console.error("Error fetching student enrollments:", error);
+      throw error;
+    }
+  },
+
+  // Create new student enrollment
+  createStudentEnrollment: async (enrollmentData: CreateStudentEnrollmentForm): Promise<StudentEnrollment> => {
+    try {
+      // Calculate total units from selected courses
+      const totalUnits = enrollmentData.selectedCourses.reduce((total, courseString) => {
+        // Extract units from course string format: "CS201 - Data Structures and Algorithms (3 units)"
+        const unitsMatch = courseString.match(/\((\d+)\s+units?\)/);
+        return total + (unitsMatch ? parseInt(unitsMatch[1], 10) : 0);
+      }, 0);
+
+      const payload = {
+        name: enrollmentData.name,
+        studentNumber: enrollmentData.studentNumber,
+        department: enrollmentData.department,
+        yearLevel: enrollmentData.yearLevel,
+        semester: enrollmentData.semester,
+        academicYear: enrollmentData.academicYear,
+        selectedCourses: enrollmentData.selectedCourses,
+        totalUnits,
+        createdAt: new Date().toISOString(),
+      };
+
+      console.log("Creating student enrollment with payload:", payload);
+      const response = await axios.post(`${ENROLLMENT_BASE_URL}/createEnrollment`, payload);
+      console.log("createStudentEnrollment response:", response.data);
+
+      return response.data.data || response.data;
+    } catch (error: unknown) {
+      console.error("Error creating student enrollment:", error);
+      if (error instanceof AxiosError && error.response) {
+        console.error("Server response:", error.response.data);
+        console.error("Status code:", error.response.status);
+      }
+      throw error;
+    }
+  },
+
+  // Update student enrollment
+  updateStudentEnrollment: async (
+    id: string,
+    updateData: UpdateStudentEnrollmentForm
+  ): Promise<StudentEnrollment> => {
+    try {
+      // Calculate total units if selectedCourses is being updated
+      let totalUnits: number | undefined;
+      if (updateData.selectedCourses) {
+        totalUnits = updateData.selectedCourses.reduce((total, courseString) => {
+          const unitsMatch = courseString.match(/\((\d+)\s+units?\)/);
+          return total + (unitsMatch ? parseInt(unitsMatch[1], 10) : 0);
+        }, 0);
+      }
+
+      // Clean payload - only include defined fields
+      const payload: Partial<StudentEnrollment> = {};
+      
+      if (updateData.name !== undefined) payload.name = updateData.name;
+      if (updateData.studentNumber !== undefined) payload.studentNumber = updateData.studentNumber;
+      if (updateData.department !== undefined) payload.department = updateData.department;
+      if (updateData.yearLevel !== undefined) payload.yearLevel = updateData.yearLevel;
+      if (updateData.semester !== undefined) payload.semester = updateData.semester;
+      if (updateData.academicYear !== undefined) payload.academicYear = updateData.academicYear;
+      if (updateData.selectedCourses !== undefined) payload.selectedCourses = updateData.selectedCourses;
+      if (totalUnits !== undefined) payload.totalUnits = totalUnits;
+
+      console.log(`Updating student enrollment ${id} with payload:`, payload);
+      const response = await axios.put(`${ENROLLMENT_BASE_URL}/updateEnrollment/${id}`, payload);
+      console.log("updateStudentEnrollment response:", response.data);
+
+      return response.data.data || response.data;
+    } catch (error: unknown) {
+      console.error("Error updating student enrollment:", error);
+      if (error instanceof AxiosError && error.response) {
+        console.error("Server response:", error.response.data);
+        console.error("Status code:", error.response.status);
+      }
+      throw error;
+    }
+  },
+
+  // Delete student enrollment
+  deleteStudentEnrollment: async (id: string): Promise<void> => {
+    try {
+      console.log(`Deleting student enrollment ${id}`);
+      const response = await axios.delete(`${ENROLLMENT_BASE_URL}/deleteEnrollment/${id}`);
+      console.log("deleteStudentEnrollment response:", response.data);
+    } catch (error: unknown) {
+      console.error("Error deleting student enrollment:", error);
+      if (error instanceof AxiosError && error.response) {
+        console.error("Server response:", error.response.data);
+        console.error("Status code:", error.response.status);
+      }
+      throw error;
     }
   },
 };

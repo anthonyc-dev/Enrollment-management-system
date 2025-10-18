@@ -39,15 +39,15 @@ function normalizeCourse(rawUnknown: unknown): Course {
     units: getNumber(raw, "units", 0),
     department: getString(raw, "department", ""),
     prerequisites: getStringArray(raw, "prerequisites"),
-    createdAt:
+    dateCreated:
       getString(raw, "createdAt") ||
       getString(raw, "dateCreated") ||
       new Date().toISOString(),
-    updatedAt:
+    dateUpdated:
       getString(raw, "updatedAt") ||
       getString(raw, "dateUpdated") ||
       new Date().toISOString(),
-  } as Course;
+  };
 }
 
 function normalizeSection(rawUnknown: unknown): Section {
@@ -94,7 +94,8 @@ function normalizeSection(rawUnknown: unknown): Section {
     schedule,
     maxCapacity: getNumber(raw, "maxCapacity", 0),
     currentEnrollment: getNumber(raw, "currentEnrollment", 0),
-    semester: getString(raw, "semester") || getString(raw, "semesterId", ""),
+    semesterId: getString(raw, "semester") || getString(raw, "semesterId", ""),
+    status: (getString(raw, "status", "Open") as Section["status"]) || "Open",
     department: getString(raw, "department", ""),
     dateCreated:
       getString(raw, "createdAt") ||
@@ -104,7 +105,7 @@ function normalizeSection(rawUnknown: unknown): Section {
       getString(raw, "updatedAt") ||
       getString(raw, "dateUpdated") ||
       new Date().toISOString(),
-  } as Section;
+  };
 }
 
 // Course API Services

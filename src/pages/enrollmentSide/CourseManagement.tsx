@@ -210,12 +210,13 @@ const CourseManagement: React.FC = () => {
               units: 0,
               department: "",
               prerequisites: [],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
+              dateCreated: new Date().toISOString(),
+              dateUpdated: new Date().toISOString(),
             }
           : undefined;
 
-        const normalized: Section & {
+        const normalized: Omit<Section, "semesterId"> & {
+          semester: string;
           _firstDay?: Section["schedule"][number]["day"];
           _firstStart?: string;
           _firstEnd?: string;
@@ -242,6 +243,9 @@ const CourseManagement: React.FC = () => {
               .semester ||
             (section as unknown as { semesterId?: string }).semesterId ||
             "",
+          status:
+            (section as unknown as { status?: "Open" | "Closed" | "Cancelled" })
+              .status || "Open",
           dateCreated:
             section.dateCreated ||
             section.createdAt ||
@@ -264,7 +268,7 @@ const CourseManagement: React.FC = () => {
         return normalized;
       });
 
-      setSections(sectionsWithDefaults as Section[]);
+      setSections(sectionsWithDefaults as unknown as Section[]);
     } catch (error) {
       console.error("Error fetching data:", error);
       message.error("Failed to load courses and sections");
