@@ -7,6 +7,7 @@ interface FormInputProps {
   placeholder?: string;
   autoComplete?: string;
   error?: FieldError;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   register: any;
   label?: string;
   className?: string;

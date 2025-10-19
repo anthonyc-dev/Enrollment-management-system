@@ -3,7 +3,9 @@ import { MessageCircleWarning } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface NdaAgreementProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   register: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   errors: any;
   label: string;
   linkText: string;
@@ -51,7 +53,7 @@ const NdaAgreement: React.FC<NdaAgreementProps> = ({
       </div>
       {errors?.nda && (
         <span className="block text-xs text-red-600 mt-1">
-          {errors.nda.message}
+          {typeof errors.nda === 'object' && errors.nda.message ? errors.nda.message : 'This field is required'}
         </span>
       )}
     </div>
