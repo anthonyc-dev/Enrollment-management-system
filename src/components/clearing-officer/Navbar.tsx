@@ -30,9 +30,9 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
   // };
 
   return (
-    <nav>
+    <nav className="p-5 ">
       {/* backdrop-blur-md border-b border-border/50 */}
-      <div className=" bg-[#0F0E0E] backdrop-blur-md   mx-auto px-4 sm:px-6 lg:px-8">
+      <div className=" bg-[#0F0E0E] backdrop-blur-md mx-auto px-4 sm:px-6 lg:px-8 rounded-lg border-1 border-white/15">
         <div className="flex items-center justify-between h-16">
           {/* Title */}
           <Button
