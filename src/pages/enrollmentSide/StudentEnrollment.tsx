@@ -123,6 +123,13 @@ const StudentEnrollmentComponent: React.FC = () => {
     selectedCourses: [],
   });
 
+  // Edit modal course selection states
+  const [editCourseQuery, setEditCourseQuery] = useState("");
+  const [editCourseDepartmentFilter, setEditCourseDepartmentFilter] =
+    useState<string>("");
+  const [editCourseYearLevelFilter, setEditCourseYearLevelFilter] =
+    useState<string>("");
+
   // Fetch all data on component mount
   useEffect(() => {
     fetchAllData();
@@ -384,6 +391,35 @@ const StudentEnrollmentComponent: React.FC = () => {
     return matchesSearch && matchesDepartment && matchesYearLevel;
   });
 
+  // Filter courses for edit modal
+  const filteredEditCourses = courses.filter((course) => {
+    // Search filter - matches course code, course name, or description
+    const matchesSearch =
+      !editCourseQuery ||
+      course.courseCode
+        ?.toLowerCase()
+        .includes(editCourseQuery.toLowerCase()) ||
+      course.courseName
+        ?.toLowerCase()
+        .includes(editCourseQuery.toLowerCase()) ||
+      course.description?.toLowerCase().includes(editCourseQuery.toLowerCase());
+
+    // Department filter
+    const matchesDepartment =
+      !editCourseDepartmentFilter ||
+      course.department === editCourseDepartmentFilter;
+
+    // Year level filter based on course code (e.g., 101 -> 1st Year)
+    const courseYearLevel = course.courseCode
+      ? mapCourseCodeToYearLevel(course.courseCode)
+      : undefined;
+    const matchesYearLevel =
+      !editCourseYearLevelFilter ||
+      editCourseYearLevelFilter === courseYearLevel;
+
+    return matchesSearch && matchesDepartment && matchesYearLevel;
+  });
+
   // Filtering for Current Student Enrollments table
   const filteredStudentEnrollments = studentEnrollments.filter((record) => {
     const matchesSearch =
@@ -416,14 +452,28 @@ const StudentEnrollmentComponent: React.FC = () => {
     );
   };
 
+  // Handle course toggle in edit modal
+  const handleEditCourseToggle = (course: Course) => {
+    const courseString = `${course.courseCode} - ${course.courseName} (${course.units} units)`;
+    setEditFormData((prev) => ({
+      ...prev,
+      selectedCourses: prev.selectedCourses.includes(courseString)
+        ? prev.selectedCourses.filter((c) => c !== courseString)
+        : [...prev.selectedCourses, courseString],
+    }));
+  };
+
   const handleStudentSelect = (student: Student) => {
     setSelectedStudent(student);
     setCurrentStep(1);
   };
 
   const handleSemesterSelect = (semester: Semester) => {
-    setSelectedSemester(semester);
-    setCurrentStep(2);
+    // Only allow selection of active semesters
+    if (semester.status === "Active" || semester.status === "active") {
+      setSelectedSemester(semester);
+      setCurrentStep(2);
+    }
   };
 
   const handleEnrollStudent = async () => {
@@ -622,6 +672,69 @@ const StudentEnrollmentComponent: React.FC = () => {
             danger={isSelected}
             icon={isSelected ? <MinusOutlined /> : <PlusOutlined />}
             onClick={() => handleCourseToggle(record)}
+          >
+            {isSelected ? "Remove" : "Add"}
+          </Button>
+        );
+      },
+    },
+  ];
+
+  // Edit modal course columns
+  const editCourseColumns: ColumnsType<Course> = [
+    {
+      title: "Course Code",
+      key: "courseCode",
+      render: (_, record) => (
+        <Space>
+          <BookOutlined className="text-purple-500" />
+          <div>
+            <div className="font-medium">{record.courseCode}</div>
+          </div>
+        </Space>
+      ),
+    },
+    {
+      title: "Course Name",
+      key: "courseName",
+      render: (_, record) => (
+        <div>
+          <div className="font-medium">{record.courseName}</div>
+          <div className="text-sm text-gray-500">
+            {record.description || "No description"}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Units",
+      key: "units",
+      width: 80,
+      align: "center" as const,
+      render: (_, record) => (
+        <div className="text-center">
+          <Tag color="blue">{record.units}</Tag>
+        </div>
+      ),
+    },
+    {
+      title: "Department",
+      key: "department",
+      render: (_, record) => <Tag color="green">{record.department}</Tag>,
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (_, record) => {
+        const courseString = `${record.courseCode} - ${record.courseName} (${record.units} units)`;
+        const isSelected = editFormData.selectedCourses.includes(courseString);
+
+        return (
+          <Button
+            type={isSelected ? "primary" : "default"}
+            danger={isSelected}
+            icon={isSelected ? <MinusOutlined /> : <PlusOutlined />}
+            onClick={() => handleEditCourseToggle(record)}
           >
             {isSelected ? "Remove" : "Add"}
           </Button>
@@ -982,53 +1095,69 @@ const StudentEnrollmentComponent: React.FC = () => {
             <h4 className="font-medium mb-4">Select Semester:</h4>
             <Spin spinning={semestersLoading}>
               <div className="space-y-2">
-                {semesters.map((semester) => (
-                  <Card
-                    key={semester.id}
-                    hoverable
-                    className={`cursor-pointer ${
-                      selectedSemester?.id === semester.id
-                        ? "border-blue-500 bg-blue-50"
-                        : ""
-                    }`}
-                    onClick={() => handleSemesterSelect(semester)}
-                  >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <div className="font-medium">
-                          {semester.semesterName}
+                {semesters.map((semester) => {
+                  const isActive =
+                    semester.status === "Active" ||
+                    semester.status === "active";
+                  const isSelected = selectedSemester?.id === semester.id;
+
+                  return (
+                    <Card
+                      key={semester.id}
+                      hoverable={isActive}
+                      className={`${
+                        isActive
+                          ? "cursor-pointer"
+                          : "cursor-not-allowed opacity-50"
+                      } ${
+                        isSelected && isActive
+                          ? "border-blue-500 bg-blue-50"
+                          : ""
+                      }`}
+                      onClick={() => isActive && handleSemesterSelect(semester)}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="font-medium">
+                            {semester.semesterName}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {semester.academicYear}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {semester.startDate && semester.endDate ? (
+                              <>
+                                {new Date(
+                                  semester.startDate
+                                ).toLocaleDateString()}{" "}
+                                -{" "}
+                                {new Date(
+                                  semester.endDate
+                                ).toLocaleDateString()}
+                              </>
+                            ) : (
+                              semester.semesterDuration ||
+                              "Duration not specified"
+                            )}
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {semester.academicYear}
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          {semester.startDate && semester.endDate ? (
-                            <>
-                              {new Date(
-                                semester.startDate
-                              ).toLocaleDateString()}{" "}
-                              -{" "}
-                              {new Date(semester.endDate).toLocaleDateString()}
-                            </>
-                          ) : (
-                            semester.semesterDuration ||
-                            "Duration not specified"
-                          )}
-                        </div>
+                        <Tag
+                          color={
+                            semester.status === "active" ||
+                            semester.status === "Active"
+                              ? "green"
+                              : semester.status === "inactive" ||
+                                semester.status === "Inactive"
+                              ? "red"
+                              : "blue"
+                          }
+                        >
+                          {semester.status}
+                        </Tag>
                       </div>
-                      <Tag
-                        color={
-                          semester.status === "active" ||
-                          semester.status === "Active"
-                            ? "green"
-                            : "blue"
-                        }
-                      >
-                        {semester.status}
-                      </Tag>
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  );
+                })}
               </div>
             </Spin>
           </div>
@@ -1288,6 +1417,10 @@ const StudentEnrollmentComponent: React.FC = () => {
         onCancel={() => {
           setIsEditModalOpen(false);
           setEditingStudentEnrollment(null);
+          // Reset edit course filters
+          setEditCourseQuery("");
+          setEditCourseDepartmentFilter("");
+          setEditCourseYearLevelFilter("");
         }}
         onOk={async () => {
           if (!editingStudentEnrollment) return;
@@ -1345,9 +1478,9 @@ const StudentEnrollmentComponent: React.FC = () => {
         }}
         okText="Save Changes"
         confirmLoading={updateLoading}
-        width={800}
+        width={1400}
       >
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">
@@ -1425,58 +1558,162 @@ const StudentEnrollmentComponent: React.FC = () => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Selected Courses
-            </label>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
-              {editFormData.selectedCourses.map((courseString, index) => {
-                const courseParts = courseString.split(" - ");
-                const courseCode = courseParts[0];
-                const courseName = courseParts[1]?.split(" (")[0];
-                const unitsMatch = courseString.match(/\((\d+)\s+units?\)/);
-                const units = unitsMatch ? unitsMatch[1] : "0";
+          <Divider orientation="left">Course Management</Divider>
 
-                return (
-                  <div
-                    key={index}
-                    className="flex justify-between items-center p-2 bg-black rounded"
-                  >
-                    <div>
-                      <div className="font-medium">{courseCode}</div>
-                      <div className="text-sm text-gray-500">{courseName}</div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Tag color="blue">{units} units</Tag>
-                      <Button
-                        type="text"
-                        danger
-                        size="small"
-                        icon={<MinusOutlined />}
-                        onClick={() => {
-                          const newCourses =
-                            editFormData.selectedCourses.filter(
-                              (_, i) => i !== index
-                            );
-                          setEditFormData({
-                            ...editFormData,
-                            selectedCourses: newCourses,
-                          });
-                        }}
-                      />
-                    </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Selected Courses Section */}
+            <div className="bg-gray-800 p-4 rounded-lg border border-gray-600">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-lg font-semibold text-gray-100 flex items-center gap-2">
+                  <BookOutlined className="text-blue-400" />
+                  Selected Courses
+                </h4>
+                <div className="flex gap-2">
+                  <Tag color="green" className="font-medium">
+                    Total Units:{" "}
+                    {editFormData.selectedCourses.reduce(
+                      (total, courseString) => {
+                        const unitsMatch =
+                          courseString.match(/\((\d+)\s+units?\)/);
+                        return (
+                          total + (unitsMatch ? parseInt(unitsMatch[1], 10) : 0)
+                        );
+                      },
+                      0
+                    )}
+                  </Tag>
+                  <Tag color="blue" className="font-medium">
+                    {editFormData.selectedCourses.length} course(s)
+                  </Tag>
+                </div>
+              </div>
+
+              <div className="space-y-3 max-h-80 overflow-y-auto bg-gray-900 rounded border border-gray-600 p-3">
+                {editFormData.selectedCourses.length === 0 ? (
+                  <div className="text-center text-gray-400 py-8">
+                    <BookOutlined className="text-4xl text-gray-500 mb-2" />
+                    <p className="text-gray-300">No courses selected</p>
+                    <p className="text-sm text-gray-400">
+                      Add courses from the available list
+                    </p>
                   </div>
-                );
-              })}
+                ) : (
+                  editFormData.selectedCourses.map((courseString, index) => {
+                    const courseParts = courseString.split(" - ");
+                    const courseCode = courseParts[0];
+                    const courseName = courseParts[1]?.split(" (")[0];
+                    const unitsMatch = courseString.match(/\((\d+)\s+units?\)/);
+                    const units = unitsMatch ? unitsMatch[1] : "0";
+
+                    return (
+                      <div
+                        key={index}
+                        className="flex justify-between items-center p-3 bg-blue-900/30 border border-blue-700 rounded-lg hover:bg-blue-800/40 transition-colors"
+                      >
+                        <div className="flex-1">
+                          <div className="font-semibold text-blue-300">
+                            {courseCode}
+                          </div>
+                          <div className="text-sm text-gray-300 mt-1">
+                            {courseName}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Tag color="cyan" className="font-medium">
+                            {units} units
+                          </Tag>
+                          <Button
+                            type="text"
+                            danger
+                            size="small"
+                            icon={<MinusOutlined />}
+                            onClick={() => {
+                              const newCourses =
+                                editFormData.selectedCourses.filter(
+                                  (_, i) => i !== index
+                                );
+                              setEditFormData({
+                                ...editFormData,
+                                selectedCourses: newCourses,
+                              });
+                            }}
+                            className="hover:bg-red-900/30"
+                            title="Remove course"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
-            <div className="mt-2">
-              <Tag color="green">
-                Total Units:{" "}
-                {editFormData.selectedCourses.reduce((total, courseString) => {
-                  const unitsMatch = courseString.match(/\((\d+)\s+units?\)/);
-                  return total + (unitsMatch ? parseInt(unitsMatch[1], 10) : 0);
-                }, 0)}
-              </Tag>
+
+            {/* Available Courses Section */}
+            <div className="bg-gray-800 p-4 rounded-lg border border-gray-600">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-lg font-semibold text-gray-100 flex items-center gap-2">
+                  <PlusOutlined className="text-green-400" />
+                  Available Courses
+                </h4>
+              </div>
+
+              {/* Course Search and Filters */}
+              <div className="mb-4 space-y-3 bg-gray-900 p-3 rounded border border-gray-600">
+                <Input
+                  placeholder="Search by course code, name, or description..."
+                  prefix={<SearchOutlined />}
+                  value={editCourseQuery}
+                  onChange={(e) => setEditCourseQuery(e.target.value)}
+                  allowClear
+                  className="mb-2"
+                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <Select
+                    placeholder="Filter by Department"
+                    value={editCourseDepartmentFilter || undefined}
+                    onChange={(val) => setEditCourseDepartmentFilter(val || "")}
+                    allowClear
+                    className="w-full"
+                    options={uniqueCourseDepartments.map((d) => ({
+                      label: d,
+                      value: d,
+                    }))}
+                  />
+                  <Select
+                    placeholder="Filter by Year Level"
+                    value={editCourseYearLevelFilter || undefined}
+                    onChange={(val) => setEditCourseYearLevelFilter(val || "")}
+                    allowClear
+                    className="w-full"
+                    options={uniqueYearLevels.map((y) => ({
+                      label: y,
+                      value: y,
+                    }))}
+                  />
+                </div>
+              </div>
+
+              {/* Available Courses Table */}
+              <div className="bg-gray-900 border border-gray-600 rounded-lg overflow-hidden">
+                <Spin spinning={coursesLoading}>
+                  <Table
+                    columns={editCourseColumns}
+                    dataSource={filteredEditCourses}
+                    rowKey="id"
+                    pagination={{
+                      pageSize: 6,
+                      size: "small",
+                      showSizeChanger: false,
+                      showQuickJumper: true,
+                      showTotal: (total, range) =>
+                        `${range[0]}-${range[1]} of ${total} courses`,
+                    }}
+                    size="small"
+                    scroll={{ y: 320 }}
+                    className="course-selection-table"
+                  />
+                </Spin>
+              </div>
             </div>
           </div>
         </div>

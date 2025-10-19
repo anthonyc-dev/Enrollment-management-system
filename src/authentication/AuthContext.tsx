@@ -24,15 +24,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const isAuthenticated = Boolean(accessToken && user);
   const role = user?.role;
 
-  console.log("🔍 User:", user);
-  console.log("🔍 Role:", role);
-  console.log("🔍 Is Authenticated:", isAuthenticated);
+  // Authentication state computed - removed console.log for security
 
   /**
    * Handles user login.
    */
   const login = async (email: string, password: string) => {
-    console.log("🔑 Starting login process...");
+    // Login process started - removed console.log for security
     const res = await axiosInstance.post("/auth/login", { email, password });
     const token = res.data.accessToken;
     const userData = res.data.user;
@@ -45,7 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setAccessToken(token);
     setUser(userData);
 
-    console.log("✅ Login successful");
+    // Login successful - removed console.log for security
   };
 
   /**
@@ -142,11 +140,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         storedUser &&
         (!storedToken || tokenService.isTokenExpired(storedToken))
       ) {
-        console.log("🔄 Attempting initial token refresh...");
+        // Attempting initial token refresh - removed console.log for security
         try {
           await refreshAccessToken();
         } catch {
-          console.log("❌ Initial refresh failed - clearing data");
+          // Initial refresh failed - removed console.log for security
           tokenService.clearTokens();
           setAccessToken(null);
           setUser(null);
@@ -161,7 +159,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
    * Handles automatic token refresh and logout on refresh token expiry.
    */
   useEffect(() => {
-    console.log("🔧 Setting up axios interceptors");
+    // Setting up axios interceptors - removed console.log for security
 
     const requestIntercept = axiosInstance.interceptors.request.use(
       (config) => {
@@ -186,7 +184,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         // If access token expired, try to refresh
         if (error.response?.status === 401 && !originalRequest._retry) {
-          console.log("🚨 401 - Attempting token refresh");
+          // 401 error - attempting token refresh - removed console.log for security
           originalRequest._retry = true;
 
           try {

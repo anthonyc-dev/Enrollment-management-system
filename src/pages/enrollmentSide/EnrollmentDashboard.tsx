@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Card,
   Row,
@@ -9,6 +9,9 @@ import {
   Space,
   Tag,
   Badge,
+  Spin,
+  message,
+  Select,
 } from "antd";
 import {
   UserOutlined,
@@ -22,20 +25,131 @@ import {
 } from "@ant-design/icons";
 import { type ColumnsType } from "antd/es/table";
 import { Link } from "react-router-dom";
-import { enrollmentDummyData } from "../../data/enrollmentDummyData";
-import type { EnrollmentRecord } from "../../types/enrollment";
+import { enrollmentService } from "../../api/enrollmentService";
+import { courseService } from "../../api/courseService";
+import type {
+  Student,
+  Course,
+  Section,
+  Semester,
+  StudentEnrollment,
+  EnrollmentStats,
+} from "../../types/enrollment";
 
 const EnrollmentDashboard: React.FC = () => {
-  const [selectedSemester] = useState<string>("semester-2");
+  // State management for real data
+  const [semesters, setSemesters] = useState<Semester[]>([]);
+  const [studentEnrollments, setStudentEnrollments] = useState<
+    StudentEnrollment[]
+  >([]);
+  const [selectedSemester, setSelectedSemester] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [stats, setStats] = useState<EnrollmentStats>({
+    totalStudents: 0,
+    totalCourses: 0,
+    totalSections: 0,
+    activeEnrollments: 0,
+    enrollmentByDepartment: [],
+    enrollmentByYearLevel: [],
+    semesterStats: [],
+  });
 
-  const { stats, enrollmentRecords, semesters } = enrollmentDummyData;
-
+  // Get current semester and related data
   const currentSemester = semesters.find((s) => s.id === selectedSemester);
-  const currentSemesterRecords = enrollmentRecords.filter(
-    (record) => record.semesterId === selectedSemester
+  const currentSemesterEnrollments = studentEnrollments.filter(
+    (enrollment) => enrollment.semester === currentSemester?.semesterName
   );
 
-  const columns: ColumnsType<EnrollmentRecord> = [
+  // Data fetching functions
+  const fetchAllData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [
+        studentsData,
+        coursesData,
+        sectionsData,
+        semestersData,
+        enrollmentsData,
+      ] = await Promise.all([
+        enrollmentService.getStudents(),
+        courseService.getAllCourses(),
+        enrollmentService.getSections(),
+        enrollmentService.getSemesters(),
+        enrollmentService.getAllStudentEnrollments(),
+      ]);
+
+      setSemesters(semestersData);
+      setStudentEnrollments(enrollmentsData);
+
+      // Set default semester to the first active one
+      const activeSemester = semestersData.find((s) => s.status === "Active");
+      if (activeSemester && !selectedSemester) {
+        setSelectedSemester(activeSemester.id);
+      }
+
+      // Calculate real statistics
+      calculateStats(studentsData, coursesData, sectionsData, enrollmentsData);
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      message.error("Failed to load dashboard data");
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedSemester]);
+
+  // Calculate statistics from real data
+  const calculateStats = (
+    studentsData: Student[],
+    coursesData: Course[],
+    sectionsData: Section[],
+    enrollmentsData: StudentEnrollment[]
+  ) => {
+    // Department statistics from enrollment data
+    const departmentCounts = enrollmentsData.reduce((acc, enrollment) => {
+      acc[enrollment.department] = (acc[enrollment.department] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const enrollmentByDepartment = Object.entries(departmentCounts).map(
+      ([department, count]) => ({ department, count })
+    );
+
+    // Year level statistics from enrollment data
+    const yearLevelCounts = enrollmentsData.reduce((acc, enrollment) => {
+      acc[enrollment.yearLevel] = (acc[enrollment.yearLevel] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const enrollmentByYearLevel = Object.entries(yearLevelCounts).map(
+      ([yearLevel, count]) => ({ yearLevel, count })
+    );
+
+    // Active sections count
+    const activeSections = sectionsData.filter(
+      (section) => section.status === "Open"
+    ).length;
+
+    // Get unique students from enrollments
+    const uniqueStudents = new Set(enrollmentsData.map((e) => e.name)).size;
+
+    setStats({
+      totalStudents: uniqueStudents || studentsData.length,
+      totalCourses: coursesData.length,
+      totalSections: activeSections,
+      activeEnrollments: enrollmentsData.length,
+      enrollmentByDepartment,
+      enrollmentByYearLevel,
+      semesterStats: [], // Can be calculated if needed
+    });
+  };
+
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchAllData();
+  }, [fetchAllData]);
+
+  // Table columns for student enrollments
+  const columns: ColumnsType<StudentEnrollment> = [
     {
       title: "Student",
       key: "student",
@@ -43,11 +157,9 @@ const EnrollmentDashboard: React.FC = () => {
         <Space>
           <UserOutlined className="text-blue-500" />
           <div>
-            <div className="font-medium">
-              {record.student.firstName} {record.student.lastName}
-            </div>
+            <div className="font-medium">{record.name}</div>
             <div className="text-sm text-gray-500">
-              {record.student.studentNumber}
+              {record.studentNumber || "N/A"}
             </div>
           </div>
         </Space>
@@ -55,15 +167,21 @@ const EnrollmentDashboard: React.FC = () => {
     },
     {
       title: "Department",
-      dataIndex: ["student", "department"],
+      dataIndex: "department",
       key: "department",
       render: (department: string) => <Tag color="blue">{department}</Tag>,
     },
     {
       title: "Year Level",
-      dataIndex: ["student", "yearLevel"],
+      dataIndex: "yearLevel",
       key: "yearLevel",
       render: (yearLevel: string) => <Tag color="green">{yearLevel}</Tag>,
+    },
+    {
+      title: "Semester",
+      dataIndex: "semester",
+      key: "semester",
+      render: (semester: string) => <Tag color="purple">{semester}</Tag>,
     },
     {
       title: "Total Units",
@@ -72,34 +190,28 @@ const EnrollmentDashboard: React.FC = () => {
       render: (units: number) => <Badge count={units} showZero color="blue" />,
     },
     {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status: string) => (
-        <Tag
-          color={
-            status === "Enrolled"
-              ? "green"
-              : status === "Dropped"
-              ? "red"
-              : "orange"
-          }
-        >
-          {status}
-        </Tag>
+      title: "Courses",
+      dataIndex: "selectedCourses",
+      key: "selectedCourses",
+      render: (courses: string[]) => (
+        <div className="max-w-xs">
+          <span className="text-sm text-gray-600">
+            {courses.length} course{courses.length !== 1 ? "s" : ""} enrolled
+          </span>
+        </div>
       ),
     },
     {
       title: "Actions",
       key: "actions",
-      render: (_, record) => (
+      render: () => (
         <Space>
-          <Link to={`/enrollment/student/${record.studentId}`}>
+          <Link to={`/enroll`}>
             <Button type="primary" size="small" icon={<EyeOutlined />}>
               View
             </Button>
           </Link>
-          <Link to={`/enrollment/student/${record.studentId}/edit`}>
+          <Link to={`/enroll`}>
             <Button size="small" icon={<EditOutlined />}>
               Edit
             </Button>
@@ -108,6 +220,14 @@ const EnrollmentDashboard: React.FC = () => {
       ),
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Spin size="large" tip="Loading dashboard data..." />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -189,22 +309,33 @@ const EnrollmentDashboard: React.FC = () => {
       {/* Semester Selection */}
       <Card className="mb-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
+          <div className="flex-1">
             <h3 className="text-lg font-semibold mb-2">Current Semester</h3>
-            <p className="text-gray-600">
-              {currentSemester ? (
-                <>
-                  <span className="font-medium">
-                    {currentSemester.semesterName}
-                  </span>
-                  <span className="ml-2 text-sm">
-                    ({currentSemester.academicYear})
-                  </span>
-                </>
-              ) : (
-                "No semester selected"
+            <div className="flex items-center gap-4">
+              <Select
+                value={selectedSemester}
+                onChange={setSelectedSemester}
+                placeholder="Select a semester"
+                style={{ minWidth: 200 }}
+                options={semesters.map((semester) => ({
+                  value: semester.id,
+                  label: `${semester.semesterName} (${semester.academicYear})`,
+                }))}
+              />
+              {currentSemester && (
+                <Tag
+                  color={
+                    currentSemester.status === "Active"
+                      ? "green"
+                      : currentSemester.status === "Upcoming"
+                      ? "blue"
+                      : "orange"
+                  }
+                >
+                  {currentSemester.status}
+                </Tag>
               )}
-            </p>
+            </div>
           </div>
           <div className="flex gap-2">
             <Link to="/semester">
@@ -224,10 +355,15 @@ const EnrollmentDashboard: React.FC = () => {
       >
         <Table
           columns={columns}
-          dataSource={currentSemesterRecords}
+          dataSource={currentSemesterEnrollments}
           rowKey="id"
           pagination={{ pageSize: 5 }}
           scroll={{ x: "max-content" }}
+          locale={{
+            emptyText: currentSemester
+              ? `No enrollments found for ${currentSemester.semesterName}`
+              : "No semester selected",
+          }}
         />
       </Card>
 

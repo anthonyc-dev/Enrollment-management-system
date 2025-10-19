@@ -19,7 +19,7 @@ class RedirectService {
    * Redirect to login page with optional message
    */
   redirectToLogin(message?: string, showToast: boolean = true) {
-    console.log("🔄 Redirecting to login:", message);
+    // Redirecting to login - removed console.log for security
 
     if (showToast && message) {
       toast.error(message, {
@@ -37,7 +37,7 @@ class RedirectService {
 
     setTimeout(() => {
       if (this.navigate) {
-        console.log("✅ Using React Router for redirect");
+        // Using React Router for redirect - removed console.log for security
         this.navigate("/login", { replace: true });
       } else {
         // Fallback to window.location if navigate is not available

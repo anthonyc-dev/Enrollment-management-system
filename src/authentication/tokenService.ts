@@ -65,7 +65,7 @@ class TokenService {
 
   private async _performRefresh(): Promise<string> {
     try {
-      console.log("🔄 Attempting token refresh...");
+      // Token refresh attempt - removed console.log for security
       const res = await axiosInstance.post(
         "/auth/refresh-token",
         {},
@@ -75,14 +75,14 @@ class TokenService {
       const newToken = res.data.accessToken;
       this.setAccessToken(newToken);
 
-      console.log("✅ Token refresh successful!");
+      // Token refresh successful - removed console.log for security
       return newToken;
     } catch (error: unknown) {
       const axiosError = error as {
         response?: { status?: number };
         request?: unknown;
       };
-      console.log("❌ Token refresh failed:", axiosError.response?.status);
+      // Token refresh failed - removed console.log for security
       this.clearTokens();
 
       // Show message and redirect to login

@@ -150,6 +150,68 @@ const SemesterManagement: React.FC = () => {
     void loadSemesters();
   }, []);
 
+  // Effect to populate form fields when editing a semester
+  useEffect(() => {
+    if (isModalOpen && editingSemester) {
+      // Parse existing date strings for DatePicker
+      const parseSemesterDuration = (duration: string) => {
+        // Try to extract dates from format like "June 2025 – October 2025"
+        const parts = duration.split("–").map((part) => part.trim());
+        if (parts.length === 2) {
+          try {
+            const startDate = dayjs(parts[0], "MMMM YYYY");
+            const endDate = dayjs(parts[1], "MMMM YYYY");
+            if (startDate.isValid() && endDate.isValid()) {
+              return [startDate, endDate];
+            }
+          } catch {
+            console.warn("Could not parse semester duration:", duration);
+          }
+        }
+        return null;
+      };
+
+      const parseEnrollmentPeriod = (period: string) => {
+        // Try to extract dates from format like "May 1 – June 15, 2025"
+        const parts = period.split("–").map((part) => part.trim());
+        if (parts.length === 2) {
+          try {
+            // Handle formats like "May 1, 2025" or "May 1"
+            let startPart = parts[0];
+            const endPart = parts[1];
+
+            // If year is only in the end part, add it to start part
+            if (!startPart.includes(",") && endPart.includes(",")) {
+              const year = endPart.split(",")[1].trim();
+              startPart = `${startPart}, ${year}`;
+            }
+
+            const startDate = dayjs(startPart, ["MMMM D, YYYY", "MMM D, YYYY"]);
+            const endDate = dayjs(endPart, ["MMMM D, YYYY", "MMM D, YYYY"]);
+
+            if (startDate.isValid() && endDate.isValid()) {
+              return [startDate, endDate];
+            }
+          } catch {
+            console.warn("Could not parse enrollment period:", period);
+          }
+        }
+        return null;
+      };
+
+      // Set form values after modal is rendered
+      setTimeout(() => {
+        form.setFieldsValue({
+          semesterName: editingSemester.semesterName,
+          academicYear: editingSemester.academicYear,
+          semesterType: editingSemester.semesterType,
+          semesterDuration: parseSemesterDuration(editingSemester.semesterDuration || ""),
+          enrollmentPeriod: parseEnrollmentPeriod(editingSemester.enrollmentPeriod || ""),
+        });
+      }, 0);
+    }
+  }, [isModalOpen, editingSemester, form]);
+
   // Helper function to generate semester name
   const generateSemesterName = (academicYear: string, semesterType: string) => {
     const typeMap = {
@@ -172,60 +234,6 @@ const SemesterManagement: React.FC = () => {
 
   const handleEditSemester = (semester: Semester) => {
     setEditingSemester(semester);
-
-    // Parse existing date strings for DatePicker
-    const parseSemesterDuration = (duration: string) => {
-      // Try to extract dates from format like "June 2025 – October 2025"
-      const parts = duration.split("–").map((part) => part.trim());
-      if (parts.length === 2) {
-        try {
-          const startDate = dayjs(parts[0], "MMMM YYYY");
-          const endDate = dayjs(parts[1], "MMMM YYYY");
-          if (startDate.isValid() && endDate.isValid()) {
-            return [startDate, endDate];
-          }
-        } catch {
-          console.warn("Could not parse semester duration:", duration);
-        }
-      }
-      return null;
-    };
-
-    const parseEnrollmentPeriod = (period: string) => {
-      // Try to extract dates from format like "May 1 – June 15, 2025"
-      const parts = period.split("–").map((part) => part.trim());
-      if (parts.length === 2) {
-        try {
-          // Handle formats like "May 1, 2025" or "May 1"
-          let startPart = parts[0];
-          const endPart = parts[1];
-
-          // If year is only in the end part, add it to start part
-          if (!startPart.includes(",") && endPart.includes(",")) {
-            const year = endPart.split(",")[1].trim();
-            startPart = `${startPart}, ${year}`;
-          }
-
-          const startDate = dayjs(startPart, ["MMMM D, YYYY", "MMM D, YYYY"]);
-          const endDate = dayjs(endPart, ["MMMM D, YYYY", "MMM D, YYYY"]);
-
-          if (startDate.isValid() && endDate.isValid()) {
-            return [startDate, endDate];
-          }
-        } catch {
-          console.warn("Could not parse enrollment period:", period);
-        }
-      }
-      return null;
-    };
-
-    form.setFieldsValue({
-      semesterName: semester.semesterName,
-      academicYear: semester.academicYear,
-      semesterType: semester.semesterType,
-      semesterDuration: parseSemesterDuration(semester.semesterDuration || ""),
-      enrollmentPeriod: parseEnrollmentPeriod(semester.enrollmentPeriod || ""),
-    });
     setIsModalOpen(true);
   };
 
@@ -518,7 +526,7 @@ const SemesterManagement: React.FC = () => {
         await semesterService.updateSemester(editingSemester.id, payload);
         message.success("Semester updated successfully");
       } else {
-        console.log("Create operation"); // Debug log
+        // Create operation - removed console.log for security
         await semesterService.createSemester(payload);
         message.success("Semester created successfully");
       }

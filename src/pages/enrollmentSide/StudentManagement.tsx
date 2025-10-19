@@ -102,19 +102,24 @@ const StudentManagement: React.FC = () => {
   // Handle form fields when modal opens
   useEffect(() => {
     if (isModalOpen) {
-      if (editingStudent) {
-        // For editing, populate form with student data
-        form.setFieldsValue({
-          ...editingStudent,
-          dateOfBirth: editingStudent.dateOfBirth
-            ? dayjs(editingStudent.dateOfBirth)
-            : null,
-        });
-      } else {
-        // For new student, reset and set default status
-        form.resetFields();
-        form.setFieldsValue({ status: "Active" });
-      }
+      // Add a small delay to ensure the form is fully rendered
+      const timer = setTimeout(() => {
+        if (editingStudent) {
+          // For editing, populate form with student data
+          form.setFieldsValue({
+            ...editingStudent,
+            dateOfBirth: editingStudent.dateOfBirth
+              ? dayjs(editingStudent.dateOfBirth)
+              : null,
+          });
+        } else {
+          // For new student, reset and set default status
+          form.resetFields();
+          form.setFieldsValue({ status: "Active" });
+        }
+      }, 100); // 100ms delay to ensure form is rendered
+
+      return () => clearTimeout(timer);
     }
   }, [isModalOpen, editingStudent, form]);
 
