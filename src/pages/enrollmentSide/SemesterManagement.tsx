@@ -13,6 +13,8 @@ import {
   Row,
   Col,
   DatePicker,
+  Divider,
+  Typography,
 } from "antd";
 import dayjs from "dayjs";
 import {
@@ -25,12 +27,18 @@ import {
   CheckCircleOutlined,
   ReloadOutlined,
   StopOutlined,
+  BookOutlined,
+  ClockCircleOutlined,
+  UserOutlined,
+  InfoCircleOutlined,
+  FieldTimeOutlined,
 } from "@ant-design/icons";
 import { type ColumnsType } from "antd/es/table";
 import type { Semester, CreateSemesterForm } from "../../types/enrollment";
 import { semesterService } from "../../api/semesterService";
 
 const { Option } = Select;
+const { Title, Text } = Typography;
 
 const SemesterManagement: React.FC = () => {
   const [semesters, setSemesters] = useState<Semester[]>([]);
@@ -1005,46 +1013,229 @@ const SemesterManagement: React.FC = () => {
           </Form.Item>
         </Form>
       </Modal>
-      {/* View Semester Modal */}
+      {/* Enhanced View Semester Modal - Dark Theme Optimized */}
       <Modal
-        title="Semester Details"
+        title={
+          <div className="flex items-center gap-3">
+            <EyeOutlined className="text-blue-400" />
+            <Title level={4} className="mb-0 text-slate-100">
+              Semester Details
+            </Title>
+          </div>
+        }
         open={!!viewSemester}
         onCancel={() => setViewSemester(null)}
         footer={[
+          <Button
+            key="edit"
+            type="primary"
+            icon={<EditOutlined />}
+            onClick={() => {
+              if (viewSemester) {
+                handleEditSemester(viewSemester);
+                setViewSemester(null);
+              }
+            }}
+          >
+            Edit Semester
+          </Button>,
           <Button key="close" onClick={() => setViewSemester(null)}>
             Close
           </Button>,
         ]}
-        width={520}
+        width={700}
+        className="semester-view-modal"
       >
         {viewSemester && (
-          <div className="space-y-2">
-            <div>
-              <strong>Name:</strong> {viewSemester.semesterName}
-            </div>
-            <div>
-              <strong>Academic Year:</strong> {viewSemester.academicYear}
-            </div>
-            <div>
-              <strong>Type:</strong> {viewSemester.semesterType}
-            </div>
-            <div>
-              <strong>Duration:</strong> {viewSemester.semesterDuration}
-            </div>
-            <div>
-              <strong>Enrollment:</strong> {viewSemester.enrollmentPeriod}
-            </div>
-            <div>
-              <strong>Status:</strong> {viewSemester.status}
-            </div>
-            <div>
-              <strong>Created:</strong>{" "}
-              {new Date(viewSemester.dateCreated).toLocaleString()}
-            </div>
-            <div>
-              <strong>Updated:</strong>{" "}
-              {new Date(viewSemester.dateUpdated).toLocaleString()}
-            </div>
+          <div className="space-y-6">
+            {/* Header Card with Status - Dark Theme Friendly */}
+            <Card className="bg-gradient-to-r from-slate-800 to-slate-700 border-slate-600">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="bg-blue-500/20 p-3 rounded-full border border-blue-400/30">
+                    <CalendarOutlined className="text-blue-300 text-xl" />
+                  </div>
+                  <div>
+                    <Title level={3} className="mb-1 text-slate-100">
+                      {viewSemester.semesterName}
+                    </Title>
+                    <Text className="text-slate-300 text-lg">
+                      {viewSemester.academicYear}
+                    </Text>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <Tag
+                    color={getStatusColor(viewSemester.status)}
+                    icon={getStatusIcon(viewSemester.status)}
+                    className="text-lg px-4 py-2 font-medium"
+                  >
+                    {viewSemester.status.charAt(0).toUpperCase() +
+                      viewSemester.status.slice(1)}
+                  </Tag>
+                </div>
+              </div>
+            </Card>
+
+            {/* Main Information Grid - Dark Theme Optimized */}
+            <Row gutter={[24, 24]}>
+              <Col xs={24} md={12}>
+                <Card
+                  title={
+                    <div className="flex items-center gap-2">
+                      <BookOutlined className="text-purple-400" />
+                      <span className="text-slate-200">
+                        Academic Information
+                      </span>
+                    </div>
+                  }
+                  className="h-full bg-slate-800 border-slate-600"
+                  headStyle={{
+                    backgroundColor: "#1e293b",
+                    borderBottom: "1px solid #475569",
+                    color: "#e2e8f0",
+                  }}
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <InfoCircleOutlined className="text-blue-400" />
+                      <div>
+                        <Text strong className="block text-slate-200">
+                          Semester Type
+                        </Text>
+                        <Tag color="blue" className="mt-1">
+                          {viewSemester.semesterType}
+                        </Tag>
+                      </div>
+                    </div>
+                    <Divider className="my-3 border-slate-600" />
+                    <div className="flex items-center gap-3">
+                      <UserOutlined className="text-green-400" />
+                      <div>
+                        <Text strong className="block text-slate-200">
+                          Academic Year
+                        </Text>
+                        <Text className="text-slate-300 text-base">
+                          {viewSemester.academicYear}
+                        </Text>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </Col>
+
+              <Col xs={24} md={12}>
+                <Card
+                  title={
+                    <div className="flex items-center gap-2">
+                      <ClockCircleOutlined className="text-orange-400" />
+                      <span className="text-slate-200">
+                        Timeline Information
+                      </span>
+                    </div>
+                  }
+                  className="h-full bg-slate-800 border-slate-600"
+                  headStyle={{
+                    backgroundColor: "#1e293b",
+                    borderBottom: "1px solid #475569",
+                    color: "#e2e8f0",
+                  }}
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <CalendarOutlined className="text-blue-400 mt-1" />
+                      <div>
+                        <Text strong className="block text-slate-200">
+                          Semester Duration
+                        </Text>
+                        <Text className="text-slate-300 text-base">
+                          {viewSemester.semesterDuration || "Not specified"}
+                        </Text>
+                      </div>
+                    </div>
+                    <Divider className="my-3 border-slate-600" />
+                    <div className="flex items-start gap-3">
+                      <FieldTimeOutlined className="text-green-400 mt-1" />
+                      <div>
+                        <Text strong className="block text-slate-200">
+                          Enrollment Period
+                        </Text>
+                        <Text className="text-slate-300 text-base">
+                          {viewSemester.enrollmentPeriod || "Not specified"}
+                        </Text>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </Col>
+            </Row>
+
+            {/* System Information - Dark Theme Optimized */}
+            <Card
+              title={
+                <div className="flex items-center gap-2">
+                  <InfoCircleOutlined className="text-slate-400" />
+                  <span className="text-slate-200">System Information</span>
+                </div>
+              }
+              className="bg-slate-800 border-slate-600"
+              headStyle={{
+                backgroundColor: "#1e293b",
+                borderBottom: "1px solid #475569",
+                color: "#e2e8f0",
+              }}
+            >
+              <Row gutter={[24, 16]}>
+                <Col xs={24} sm={12}>
+                  <div className="flex items-center gap-3">
+                    <div className="bg-green-500/20 p-2 rounded-full border border-green-400/30">
+                      <PlusOutlined className="text-green-300" />
+                    </div>
+                    <div>
+                      <Text strong className="block text-slate-200">
+                        Created
+                      </Text>
+                      <Text className="text-slate-300">
+                        {new Date(viewSemester.dateCreated).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
+                      </Text>
+                    </div>
+                  </div>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-500/20 p-2 rounded-full border border-blue-400/30">
+                      <EditOutlined className="text-blue-300" />
+                    </div>
+                    <div>
+                      <Text strong className="block text-slate-200">
+                        Last Updated
+                      </Text>
+                      <Text className="text-slate-300">
+                        {new Date(viewSemester.dateUpdated).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
+                      </Text>
+                    </div>
+                  </div>
+                </Col>
+              </Row>
+            </Card>
           </div>
         )}
       </Modal>
