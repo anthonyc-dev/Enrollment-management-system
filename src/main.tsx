@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 import "@ant-design/v5-patch-for-react-19";
-import { ConfigProvider, theme, App as AntdApp } from "antd";
+import { ConfigProvider, theme } from "antd";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -20,9 +20,7 @@ createRoot(document.getElementById("root")!).render(
         algorithm: theme.darkAlgorithm,
       }}
     >
-      <AntdApp>
-        <App />
-      </AntdApp>
+      <App />
     </ConfigProvider>
   </StrictMode>
 );
