@@ -1090,10 +1090,12 @@ const SemesterManagement: React.FC = () => {
                     </div>
                   }
                   className="h-full bg-slate-800 border-slate-600"
-                  headStyle={{
-                    backgroundColor: "#1e293b",
-                    borderBottom: "1px solid #475569",
-                    color: "#e2e8f0",
+                  styles={{
+                    header: {
+                      backgroundColor: "#1e293b",
+                      borderBottom: "1px solid #475569",
+                      color: "#e2e8f0",
+                    }
                   }}
                 >
                   <div className="space-y-4">
@@ -1135,10 +1137,12 @@ const SemesterManagement: React.FC = () => {
                     </div>
                   }
                   className="h-full bg-slate-800 border-slate-600"
-                  headStyle={{
-                    backgroundColor: "#1e293b",
-                    borderBottom: "1px solid #475569",
-                    color: "#e2e8f0",
+                  styles={{
+                    header: {
+                      backgroundColor: "#1e293b",
+                      borderBottom: "1px solid #475569",
+                      color: "#e2e8f0",
+                    }
                   }}
                 >
                   <div className="space-y-4">
@@ -1179,10 +1183,12 @@ const SemesterManagement: React.FC = () => {
                 </div>
               }
               className="bg-slate-800 border-slate-600"
-              headStyle={{
-                backgroundColor: "#1e293b",
-                borderBottom: "1px solid #475569",
-                color: "#e2e8f0",
+              styles={{
+                header: {
+                  backgroundColor: "#1e293b",
+                  borderBottom: "1px solid #475569",
+                  color: "#e2e8f0",
+                }
               }}
             >
               <Row gutter={[24, 16]}>

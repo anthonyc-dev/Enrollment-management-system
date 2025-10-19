@@ -598,7 +598,7 @@ const StudentEnrollmentComponent: React.FC = () => {
                 (course) => course.id === prereqId
               );
               return (
-                <Tag key={index} color="red" className="mb-1">
+                <Tag key={index} color="orange" className="mb-1">
                   {prereqCourse ? prereqCourse.courseCode : prereqId}
                 </Tag>
               );
@@ -1131,7 +1131,7 @@ const StudentEnrollmentComponent: React.FC = () => {
                   {selectedCourses.map((courseString, index) => (
                     <div
                       key={index}
-                      className="flex justify-between items-center p-2 bg-gray-50 rounded"
+                      className="flex justify-between items-center p-2 bg-black rounded"
                     >
                       <div>
                         <div className="font-medium">
@@ -1260,7 +1260,7 @@ const StudentEnrollmentComponent: React.FC = () => {
                     return (
                       <div
                         key={index}
-                        className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+                        className="flex justify-between items-center p-3 bg-black rounded-lg"
                       >
                         <div>
                           <div className="font-medium text-blue-600">
@@ -1440,7 +1440,7 @@ const StudentEnrollmentComponent: React.FC = () => {
                 return (
                   <div
                     key={index}
-                    className="flex justify-between items-center p-2 bg-gray-50 rounded"
+                    className="flex justify-between items-center p-2 bg-black rounded"
                   >
                     <div>
                       <div className="font-medium">{courseCode}</div>

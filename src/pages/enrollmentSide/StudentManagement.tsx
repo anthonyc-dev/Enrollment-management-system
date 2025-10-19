@@ -581,7 +581,7 @@ const StudentManagement: React.FC = () => {
         onOk={handleModalOk}
         okText={editingStudent ? "Update Student" : "Add Student"}
         width={600}
-        destroyOnClose={false}
+        destroyOnHidden={false}
       >
         <Form form={form} layout="vertical" preserve={false}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -723,8 +723,8 @@ const StudentManagement: React.FC = () => {
           setViewingStudent(null);
         }}
         footer={[
-          <Button 
-            key="close" 
+          <Button
+            key="close"
             type="primary"
             className="bg-blue-600 hover:bg-blue-700 border-blue-600"
             onClick={() => {
@@ -733,32 +733,10 @@ const StudentManagement: React.FC = () => {
             }}
           >
             Close
-          </Button>
+          </Button>,
         ]}
         width={700}
         className="dark-modal"
-        styles={{
-          mask: { backgroundColor: 'rgba(0, 0, 0, 0.7)' },
-          content: { 
-            backgroundColor: '#1f2937',
-            border: '1px solid #374151',
-            borderRadius: '12px'
-          },
-          header: { 
-            backgroundColor: '#1f2937',
-            borderBottom: '1px solid #374151',
-            borderRadius: '12px 12px 0 0'
-          },
-          body: { 
-            backgroundColor: '#1f2937',
-            color: '#f3f4f6'
-          },
-          footer: {
-            backgroundColor: '#1f2937',
-            borderTop: '1px solid #374151',
-            borderRadius: '0 0 12px 12px'
-          }
-        }}
       >
         {viewingStudent && (
           <div className="space-y-6 text-gray-100">
@@ -769,7 +747,9 @@ const StudentManagement: React.FC = () => {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <div className="text-sm text-gray-400 mb-1">Student Number</div>
+                  <div className="text-sm text-gray-400 mb-1">
+                    Student Number
+                  </div>
                   <div className="text-lg font-mono text-blue-300">
                     {viewingStudent.schoolId}
                   </div>
@@ -777,19 +757,32 @@ const StudentManagement: React.FC = () => {
                 <div>
                   <div className="text-sm text-gray-400 mb-1">Full Name</div>
                   <div className="text-lg text-white font-medium">
-                    {viewingStudent.firstName} {viewingStudent.middleName ? viewingStudent.middleName + ' ' : ''}{viewingStudent.lastName}
+                    {viewingStudent.firstName}{" "}
+                    {viewingStudent.middleName
+                      ? viewingStudent.middleName + " "
+                      : ""}
+                    {viewingStudent.lastName}
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-400 mb-1">Date of Birth</div>
+                  <div className="text-sm text-gray-400 mb-1">
+                    Date of Birth
+                  </div>
                   <div className="text-lg text-white">
-                    {viewingStudent.dateOfBirth ? dayjs(viewingStudent.dateOfBirth).format("MMMM DD, YYYY") : "N/A"}
+                    {viewingStudent.dateOfBirth
+                      ? dayjs(viewingStudent.dateOfBirth).format(
+                          "MMMM DD, YYYY"
+                        )
+                      : "N/A"}
                   </div>
                 </div>
                 <div>
                   <div className="text-sm text-gray-400 mb-1">Gender</div>
                   <div className="mt-1">
-                    <Tag color={viewingStudent.gender === 'Male' ? 'blue' : 'pink'} className="text-sm px-3 py-1">
+                    <Tag
+                      color={viewingStudent.gender === "Male" ? "blue" : "pink"}
+                      className="text-sm px-3 py-1"
+                    >
                       {viewingStudent.gender}
                     </Tag>
                   </div>
@@ -804,7 +797,9 @@ const StudentManagement: React.FC = () => {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <div className="text-sm text-gray-400 mb-1">Email Address</div>
+                  <div className="text-sm text-gray-400 mb-1">
+                    Email Address
+                  </div>
                   <div className="text-lg font-mono text-green-300">
                     {viewingStudent.email}
                   </div>
