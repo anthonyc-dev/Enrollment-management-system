@@ -45,6 +45,10 @@ const CourseManagement: React.FC = () => {
   const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [editingSection, setEditingSection] = useState<Section | null>(null);
+  const [viewingCourse, setViewingCourse] = useState<Course | null>(null);
+  const [viewingSection, setViewingSection] = useState<Section | null>(null);
+  const [isCourseViewModalOpen, setIsCourseViewModalOpen] = useState(false);
+  const [isSectionViewModalOpen, setIsSectionViewModalOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [filters, setFilters] = useState({
     department: "",
@@ -384,6 +388,16 @@ const CourseManagement: React.FC = () => {
     setIsSectionModalOpen(true);
   };
 
+  const handleViewCourse = (course: Course) => {
+    setViewingCourse(course);
+    setIsCourseViewModalOpen(true);
+  };
+
+  const handleViewSection = (section: Section) => {
+    setViewingSection(section);
+    setIsSectionViewModalOpen(true);
+  };
+
   const handleDeleteSection = (id: string) => {
     Modal.confirm({
       title: "Are you sure you want to delete this section?",
@@ -646,10 +660,7 @@ const CourseManagement: React.FC = () => {
           <Button
             type="text"
             icon={<EyeOutlined />}
-            onClick={() => {
-              // Navigate to course details or show in modal
-              message.info(`Viewing details for ${record.courseCode}`);
-            }}
+            onClick={() => handleViewCourse(record)}
           />
           <Button
             type="text"
@@ -756,9 +767,7 @@ const CourseManagement: React.FC = () => {
           <Button
             type="text"
             icon={<EyeOutlined />}
-            onClick={() =>
-              message.info(`Viewing details for ${record.sectionCode}`)
-            }
+            onClick={() => handleViewSection(record)}
           />
           <Button
             type="text"
@@ -1171,6 +1180,306 @@ const CourseManagement: React.FC = () => {
             </Form.Item>
           </div>
         </Form>
+      </Modal>
+
+      {/* View Course Modal */}
+      <Modal
+        title="Course Details"
+        open={isCourseViewModalOpen}
+        onCancel={() => {
+          setIsCourseViewModalOpen(false);
+          setViewingCourse(null);
+        }}
+        footer={[
+          <Button key="close" onClick={() => {
+            setIsCourseViewModalOpen(false);
+            setViewingCourse(null);
+          }}>
+            Close
+          </Button>,
+        ]}
+        width={600}
+      >
+        {viewingCourse && (
+          <div className="space-y-6">
+            {/* Header Section */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-lg p-4 border border-blue-100 dark:border-gray-600">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-2">
+                    Course Code
+                  </label>
+                  <div className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                    {viewingCourse.courseCode}
+                  </div>
+                </div>
+                <div className="flex items-center">
+                  <div>
+                    <label className="block text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-2">
+                      Units
+                    </label>
+                    <div className="text-base">
+                      <Badge count={viewingCourse.units} showZero color="blue" className="text-lg" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Course Name Section */}
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2">
+                Course Name
+              </label>
+              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                {viewingCourse.courseName}
+              </div>
+            </div>
+            
+            {/* Description Section */}
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-3">
+                Description
+              </label>
+              <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed min-h-[60px]">
+                {viewingCourse.description || (
+                  <span className="italic text-gray-400 dark:text-gray-500">No description provided</span>
+                )}
+              </div>
+            </div>
+            
+            {/* Department & Prerequisites Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-700">
+                <label className="block text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide mb-2">
+                  Department
+                </label>
+                <div>
+                  <Tag color="green" className="text-sm font-medium">{viewingCourse.department}</Tag>
+                </div>
+              </div>
+              <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-700">
+                <label className="block text-xs font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wide mb-2">
+                  Prerequisites
+                </label>
+                <div className="min-h-[40px] flex items-center">
+                  {viewingCourse.prerequisites && viewingCourse.prerequisites.length > 0 ? (
+                    <Space wrap>
+                      {viewingCourse.prerequisites.map((pid) => {
+                        const match = courses.find((c) => c.id === pid);
+                        const label = match?.courseCode || pid;
+                        return (
+                          <Tag
+                            key={pid}
+                            color="orange"
+                            title={match ? `${match.courseCode} - ${match.courseName}` : pid}
+                            className="font-medium"
+                          >
+                            {label}
+                          </Tag>
+                        );
+                      })}
+                    </Space>
+                  ) : (
+                    <span className="text-gray-400 dark:text-gray-500 italic">No prerequisites required</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            {/* Metadata Section */}
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                    📅 Date Created
+                  </label>
+                  <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                    {new Date(viewingCourse.dateCreated).toLocaleDateString()}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                    🔄 Last Updated
+                  </label>
+                  <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                    {new Date(viewingCourse.dateUpdated).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* View Section Modal */}
+      <Modal
+        title="Section Details"
+        open={isSectionViewModalOpen}
+        onCancel={() => {
+          setIsSectionViewModalOpen(false);
+          setViewingSection(null);
+        }}
+        footer={[
+          <Button key="close" onClick={() => {
+            setIsSectionViewModalOpen(false);
+            setViewingSection(null);
+          }}>
+            Close
+          </Button>,
+        ]}
+        width={700}
+      >
+        {viewingSection && (
+          <div className="space-y-6">
+            {/* Header Section */}
+            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-lg p-4 border border-purple-100 dark:border-gray-600">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide mb-2">
+                    Section Code
+                  </label>
+                  <div className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                    {viewingSection.sectionCode}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide mb-2">
+                    Section Name
+                  </label>
+                  <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    {viewingSection.sectionName}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Course Information Section */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
+              <label className="block text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-3">
+                📚 Course Information
+              </label>
+              <div>
+                {viewingSection.course ? (
+                  <div className="space-y-2">
+                    <div className="text-lg font-bold text-gray-900 dark:text-gray-100">{viewingSection.course.courseCode}</div>
+                    <div className="text-base text-gray-700 dark:text-gray-300">{viewingSection.course.courseName}</div>
+                    <div className="flex items-center mt-2">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 mr-2">Units:</span>
+                      <Badge count={viewingSection.course.units} showZero color="blue" size="small" />
+                    </div>
+                  </div>
+                ) : (
+                  <span className="text-gray-400 dark:text-gray-500 italic">No course information available</span>
+                )}
+              </div>
+            </div>
+            
+            {/* Academic Details Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-700">
+                <label className="block text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide mb-2">
+                  🏢 Department
+                </label>
+                <div>
+                  <Tag color="green" className="text-sm font-medium">
+                    {viewingSection.department || viewingSection.course?.department || "Not specified"}
+                  </Tag>
+                </div>
+              </div>
+              <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-4 border border-indigo-200 dark:border-indigo-700">
+                <label className="block text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide mb-2">
+                  📅 Semester
+                </label>
+                <div className="text-base font-medium text-gray-900 dark:text-gray-100">
+                  {(viewingSection as Section & { _semesterName?: string; semester?: string })._semesterName || 
+                   (viewingSection as Section & { _semesterName?: string; semester?: string }).semester || 
+                   "Not specified"}
+                </div>
+              </div>
+            </div>
+            
+            {/* Instructor Section */}
+            <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4 border border-amber-200 dark:border-amber-700">
+              <label className="block text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-2">
+                👨‍🏫 Instructor
+              </label>
+              <div className="text-base font-medium text-gray-900 dark:text-gray-100">
+                {(viewingSection as Section & { _instructorName?: string })._instructorName || 
+                 viewingSection.instructor?.name || 
+                 <span className="italic text-gray-400 dark:text-gray-500">Not assigned</span>}
+              </div>
+            </div>
+            
+            {/* Schedule Section */}
+            <div className="bg-cyan-50 dark:bg-cyan-900/20 rounded-lg p-4 border border-cyan-200 dark:border-cyan-700">
+              <label className="block text-xs font-semibold text-cyan-600 dark:text-cyan-400 uppercase tracking-wide mb-3">
+                🕒 Schedule
+              </label>
+              <div>
+                {viewingSection.schedule && viewingSection.schedule.length > 0 ? (
+                  <div className="space-y-3">
+                    {viewingSection.schedule.map((sched, index) => (
+                      <div key={index} className="bg-white dark:bg-gray-700 rounded-md p-3 border border-cyan-100 dark:border-cyan-800">
+                        <div className="flex items-center space-x-3 text-sm">
+                          <Tag color="blue" className="font-medium">{sched.day}</Tag>
+                          <span className="text-gray-900 dark:text-gray-100 font-medium">{sched.startTime} - {sched.endTime}</span>
+                          {sched.room && (
+                            <Tag color="orange" className="font-medium">{sched.room}</Tag>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-gray-400 dark:text-gray-500 italic">No schedule information available</span>
+                )}
+              </div>
+            </div>
+            
+            {/* Enrollment Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                <label className="block text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide mb-2">
+                  👥 Max Capacity
+                </label>
+                <div className="text-base">
+                  <Badge count={viewingSection.maxCapacity || 0} showZero color="purple" className="text-lg" />
+                </div>
+              </div>
+              <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-4 border border-emerald-200 dark:border-emerald-700">
+                <label className="block text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-2">
+                  ✅ Current Enrollment
+                </label>
+                <div className="text-base">
+                  <Badge count={viewingSection.currentEnrollment || 0} showZero color="green" className="text-lg" />
+                </div>
+              </div>
+            </div>
+            
+            {/* Metadata Section */}
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                    📅 Date Created
+                  </label>
+                  <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                    {new Date(viewingSection.dateCreated).toLocaleDateString()}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                    🔄 Last Updated
+                  </label>
+                  <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                    {new Date(viewingSection.dateUpdated).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );
