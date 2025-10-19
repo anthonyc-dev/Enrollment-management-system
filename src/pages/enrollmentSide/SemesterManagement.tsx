@@ -73,8 +73,8 @@ const SemesterManagement: React.FC = () => {
     try {
       setLoading(true);
       const data = await semesterService.getAllSemesters();
-      console.log("Loaded semesters:", data); // Debug log
-      console.log("First semester data:", data[0]); // Debug log
+      // console.log("Loaded semesters:", data); // Debug log
+      // console.log("First semester data:", data[0]); // Debug log
 
       // Validate semester data and IDs
       const validSemesters = Array.isArray(data)
@@ -94,7 +94,7 @@ const SemesterManagement: React.FC = () => {
           })
         : [];
 
-      console.log("Valid semesters after filtering:", validSemesters); // Debug log
+      // console.log("Valid semesters after filtering:", validSemesters); // Debug log
       setSemesters(validSemesters);
 
       // if (data && data.length > 0) {
@@ -270,7 +270,7 @@ const SemesterManagement: React.FC = () => {
       width: 500,
       async onOk() {
         try {
-          console.log("Deleting semester:", id); // Debug log
+          // console.log("Deleting semester:", id); // Debug log
 
           const loadingMessage = message.loading(
             `Deleting ${semesterName}...`,
@@ -296,11 +296,11 @@ const SemesterManagement: React.FC = () => {
     semesterName: string
   ) => {
     try {
-      console.log("Updating semester status:", {
-        semesterId,
-        newStatus,
-        semesterName,
-      }); // Debug log
+      // console.log("Updating semester status:", {
+      //   semesterId,
+      //   newStatus,
+      //   semesterName,
+      // }); // Debug log
 
       // Check if semesterId is valid
       if (!semesterId || semesterId === "undefined") {
@@ -453,8 +453,8 @@ const SemesterManagement: React.FC = () => {
       setModalLoading(true);
       const values = await form.validateFields();
 
-      console.log("Form values:", values); // Debug log
-      console.log("Editing semester:", editingSemester); // Debug log
+      // console.log("Form values:", values); // Debug log
+      // console.log("Editing semester:", editingSemester); // Debug log
 
       // Format date ranges back to strings
       const formatSemesterDuration = (
@@ -485,7 +485,7 @@ const SemesterManagement: React.FC = () => {
         enrollmentPeriod: formatEnrollmentPeriod(values.enrollmentPeriod),
       };
 
-      console.log("Submitting semester data:", payload); // Debug log
+      // console.log("Submitting semester data:", payload); // Debug log
 
       // Validate required fields
       if (
@@ -500,7 +500,7 @@ const SemesterManagement: React.FC = () => {
       }
 
       if (editingSemester) {
-        console.log("Update operation - Semester ID:", editingSemester.id); // Debug log
+        // console.log("Update operation - Semester ID:", editingSemester.id); // Debug log
 
         // Validate semester ID before update
         if (
@@ -508,7 +508,7 @@ const SemesterManagement: React.FC = () => {
           editingSemester.id === "undefined" ||
           editingSemester.id === ""
         ) {
-          console.error("Invalid semester ID for update:", editingSemester.id);
+          // console.error("Invalid semester ID for update:", editingSemester.id);
           message.error(
             "Invalid semester ID. Please refresh the page and try again."
           );
@@ -646,11 +646,11 @@ const SemesterManagement: React.FC = () => {
           <Select
             value={record.status}
             onChange={(value) => {
-              console.log("Status change triggered:", {
-                recordId: record.id,
-                recordData: record,
-                newValue: value,
-              });
+              // console.log("Status change triggered:", {
+              //   recordId: record.id,
+              //   recordData: record,
+              //   newValue: value,
+              // });
               handleStatusChange(
                 record.id,
                 value as Semester["status"],
@@ -1095,7 +1095,7 @@ const SemesterManagement: React.FC = () => {
                       backgroundColor: "#1e293b",
                       borderBottom: "1px solid #475569",
                       color: "#e2e8f0",
-                    }
+                    },
                   }}
                 >
                   <div className="space-y-4">
@@ -1142,7 +1142,7 @@ const SemesterManagement: React.FC = () => {
                       backgroundColor: "#1e293b",
                       borderBottom: "1px solid #475569",
                       color: "#e2e8f0",
-                    }
+                    },
                   }}
                 >
                   <div className="space-y-4">
@@ -1188,7 +1188,7 @@ const SemesterManagement: React.FC = () => {
                   backgroundColor: "#1e293b",
                   borderBottom: "1px solid #475569",
                   color: "#e2e8f0",
-                }
+                },
               }}
             >
               <Row gutter={[24, 16]}>

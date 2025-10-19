@@ -199,8 +199,8 @@ const StudentManagement: React.FC = () => {
         };
 
         try {
-          console.log("Updating student with data:", updatedStudent);
-          console.log("Student ID:", editingStudent.id);
+          // console.log("Updating student with data:", updatedStudent);
+          // console.log("Student ID:", editingStudent.id);
 
           await axiosInstance.put(
             `${API_BASE_URL}/updateStudent/${editingStudent.id}`,
@@ -209,11 +209,11 @@ const StudentManagement: React.FC = () => {
           message.success("Student updated successfully");
           await fetchStudents();
         } catch (axiosErr) {
-          console.error("Update failed - Full error:", axiosErr);
+          // console.error("Update failed - Full error:", axiosErr);
 
           if (axiosErr instanceof AxiosError) {
-            console.error("Response data:", axiosErr.response?.data);
-            console.error("Response status:", axiosErr.response?.status);
+            // console.error("Response data:", axiosErr.response?.data);
+            // console.error("Response status:", axiosErr.response?.status);
 
             // Show more specific error message from backend
             if (axiosErr.response?.data?.message) {

@@ -123,11 +123,11 @@ const CourseManagement: React.FC = () => {
         sectionService.getAllSections(),
       ]);
 
-      console.log(
-        `Loaded ${coursesData?.length || 0} courses and ${
-          sectionsData?.length || 0
-        } sections`
-      );
+      // console.log(
+      //   `Loaded ${coursesData?.length || 0} courses and ${
+      //     sectionsData?.length || 0
+      //   } sections`
+      // );
 
       // Ensure all courses have required fields
       const coursesWithDefaults = (coursesData || []).map(
@@ -168,9 +168,9 @@ const CourseManagement: React.FC = () => {
         currentEnrollment?: number;
         semesterId?: string;
         // additional loose backend fields
-        instructor?: string; // backend may send instructor name string
-        semester?: string; // backend may send semester display name
-        department?: string; // backend may send department string
+        instructor?: string;
+        semester?: string;
+        department?: string;
         createdAt?: string;
         updatedAt?: string;
         dateCreated?: string;
@@ -300,11 +300,11 @@ const CourseManagement: React.FC = () => {
   });
 
   // Debug: Show counts
-  console.log(
-    `Displaying ${filteredCourses?.length || 0} of ${
-      courses?.length || 0
-    } courses`
-  );
+  // console.log(
+  //   `Displaying ${filteredCourses?.length || 0} of ${
+  //     courses?.length || 0
+  //   } courses`
+  // );
 
   // Filter sections based on search and filters - show all by default
   const filteredSections = (sections || []).filter((section) => {
@@ -424,7 +424,7 @@ const CourseManagement: React.FC = () => {
       setCourseLoading(true);
       const values = await courseForm.validateFields();
 
-      console.log("Form values:", values);
+      // console.log("Form values:", values);
 
       if (editingCourse) {
         // Update existing course - only send allowed fields
@@ -442,18 +442,18 @@ const CourseManagement: React.FC = () => {
         message.success("Course updated successfully");
       } else {
         // Create new course
-        const courseData: CreateCourseForm = {
-          courseCode: values.courseCode,
-          courseName: values.courseName,
-          description: values.description || "",
-          units: Number(values.units),
-          department: values.department,
-          prerequisites: values.prerequisites || [],
-        };
+        // const courseData: CreateCourseForm = {
+        //   courseCode: values.courseCode,
+        //   courseName: values.courseName,
+        //   description: values.description || "",
+        //   units: Number(values.units),
+        //   department: values.department,
+        //   prerequisites: values.prerequisites || [],
+        // };
 
-        console.log("Sending course data:", courseData);
-        const newCourse = await courseService.createCourse(courseData);
-        console.log("Received new course:", newCourse);
+        // console.log("Sending course data:", courseData);
+        // const newCourse = await courseService.createCourse(courseData);
+        // console.log("Received new course:", newCourse);
 
         // Refresh data to ensure we have the latest from server
         await fetchData();
@@ -524,33 +524,33 @@ const CourseManagement: React.FC = () => {
         message.success("Section updated successfully");
       } else {
         // Create new section
-        const sectionData: Omit<
-          CreateSectionForm,
-          "semesterId" | "instructorId"
-        > & {
-          instructor?: string;
-          semester?: string;
-        } = {
-          sectionCode: restValues.sectionCode,
-          sectionName: restValues.sectionName,
-          courseId: restValues.courseId,
-          department: restValues.department,
-          // backend accepts plain instructor name
-          instructor: restValues.instructor,
-          schedule,
-          maxCapacity: Number(restValues.maxCapacity),
-          // backend accepts human-readable semester name
-          semester: restValues.semester,
-        };
+        // const sectionData: Omit<
+        //   CreateSectionForm,
+        //   "semesterId" | "instructorId"
+        // > & {
+        //   instructor?: string;
+        //   semester?: string;
+        // } = {
+        //   sectionCode: restValues.sectionCode,
+        //   sectionName: restValues.sectionName,
+        //   courseId: restValues.courseId,
+        //   department: restValues.department,
+        //   // backend accepts plain instructor name
+        //   instructor: restValues.instructor,
+        //   schedule,
+        //   maxCapacity: Number(restValues.maxCapacity),
+        //   // backend accepts human-readable semester name
+        //   semester: restValues.semester,
+        // };
 
-        console.log("Sending section data:", sectionData);
-        const newSection = await sectionService.createSection(
-          sectionData as unknown as CreateSectionForm & {
-            instructor?: string;
-            semester?: string;
-          }
-        );
-        console.log("Received new section:", newSection);
+        // console.log("Sending section data:", sectionData);
+        // const newSection = await sectionService.createSection(
+        //   sectionData as unknown as CreateSectionForm & {
+        //     instructor?: string;
+        //     semester?: string;
+        //   }
+        // );
+        // console.log("Received new section:", newSection);
 
         // Refresh data to ensure we have the latest from server
         await fetchData();
@@ -1191,10 +1191,13 @@ const CourseManagement: React.FC = () => {
           setViewingCourse(null);
         }}
         footer={[
-          <Button key="close" onClick={() => {
-            setIsCourseViewModalOpen(false);
-            setViewingCourse(null);
-          }}>
+          <Button
+            key="close"
+            onClick={() => {
+              setIsCourseViewModalOpen(false);
+              setViewingCourse(null);
+            }}
+          >
             Close
           </Button>,
         ]}
@@ -1219,13 +1222,18 @@ const CourseManagement: React.FC = () => {
                       Units
                     </label>
                     <div className="text-base">
-                      <Badge count={viewingCourse.units} showZero color="blue" className="text-lg" />
+                      <Badge
+                        count={viewingCourse.units}
+                        showZero
+                        color="blue"
+                        className="text-lg"
+                      />
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            
+
             {/* Course Name Section */}
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
               <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2">
@@ -1235,7 +1243,7 @@ const CourseManagement: React.FC = () => {
                 {viewingCourse.courseName}
               </div>
             </div>
-            
+
             {/* Description Section */}
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
               <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-3">
@@ -1243,11 +1251,13 @@ const CourseManagement: React.FC = () => {
               </label>
               <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed min-h-[60px]">
                 {viewingCourse.description || (
-                  <span className="italic text-gray-400 dark:text-gray-500">No description provided</span>
+                  <span className="italic text-gray-400 dark:text-gray-500">
+                    No description provided
+                  </span>
                 )}
               </div>
             </div>
-            
+
             {/* Department & Prerequisites Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-700">
@@ -1255,7 +1265,9 @@ const CourseManagement: React.FC = () => {
                   Department
                 </label>
                 <div>
-                  <Tag color="green" className="text-sm font-medium">{viewingCourse.department}</Tag>
+                  <Tag color="green" className="text-sm font-medium">
+                    {viewingCourse.department}
+                  </Tag>
                 </div>
               </div>
               <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-700">
@@ -1263,7 +1275,8 @@ const CourseManagement: React.FC = () => {
                   Prerequisites
                 </label>
                 <div className="min-h-[40px] flex items-center">
-                  {viewingCourse.prerequisites && viewingCourse.prerequisites.length > 0 ? (
+                  {viewingCourse.prerequisites &&
+                  viewingCourse.prerequisites.length > 0 ? (
                     <Space wrap>
                       {viewingCourse.prerequisites.map((pid) => {
                         const match = courses.find((c) => c.id === pid);
@@ -1272,7 +1285,11 @@ const CourseManagement: React.FC = () => {
                           <Tag
                             key={pid}
                             color="orange"
-                            title={match ? `${match.courseCode} - ${match.courseName}` : pid}
+                            title={
+                              match
+                                ? `${match.courseCode} - ${match.courseName}`
+                                : pid
+                            }
                             className="font-medium"
                           >
                             {label}
@@ -1281,12 +1298,14 @@ const CourseManagement: React.FC = () => {
                       })}
                     </Space>
                   ) : (
-                    <span className="text-gray-400 dark:text-gray-500 italic">No prerequisites required</span>
+                    <span className="text-gray-400 dark:text-gray-500 italic">
+                      No prerequisites required
+                    </span>
                   )}
                 </div>
               </div>
             </div>
-            
+
             {/* Metadata Section */}
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1321,10 +1340,13 @@ const CourseManagement: React.FC = () => {
           setViewingSection(null);
         }}
         footer={[
-          <Button key="close" onClick={() => {
-            setIsSectionViewModalOpen(false);
-            setViewingSection(null);
-          }}>
+          <Button
+            key="close"
+            onClick={() => {
+              setIsSectionViewModalOpen(false);
+              setViewingSection(null);
+            }}
+          >
             Close
           </Button>,
         ]}
@@ -1353,7 +1375,7 @@ const CourseManagement: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Course Information Section */}
             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
               <label className="block text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-3">
@@ -1362,19 +1384,32 @@ const CourseManagement: React.FC = () => {
               <div>
                 {viewingSection.course ? (
                   <div className="space-y-2">
-                    <div className="text-lg font-bold text-gray-900 dark:text-gray-100">{viewingSection.course.courseCode}</div>
-                    <div className="text-base text-gray-700 dark:text-gray-300">{viewingSection.course.courseName}</div>
+                    <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                      {viewingSection.course.courseCode}
+                    </div>
+                    <div className="text-base text-gray-700 dark:text-gray-300">
+                      {viewingSection.course.courseName}
+                    </div>
                     <div className="flex items-center mt-2">
-                      <span className="text-xs text-gray-500 dark:text-gray-400 mr-2">Units:</span>
-                      <Badge count={viewingSection.course.units} showZero color="blue" size="small" />
+                      <span className="text-xs text-gray-500 dark:text-gray-400 mr-2">
+                        Units:
+                      </span>
+                      <Badge
+                        count={viewingSection.course.units}
+                        showZero
+                        color="blue"
+                        size="small"
+                      />
                     </div>
                   </div>
                 ) : (
-                  <span className="text-gray-400 dark:text-gray-500 italic">No course information available</span>
+                  <span className="text-gray-400 dark:text-gray-500 italic">
+                    No course information available
+                  </span>
                 )}
               </div>
             </div>
-            
+
             {/* Academic Details Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-700">
@@ -1383,7 +1418,9 @@ const CourseManagement: React.FC = () => {
                 </label>
                 <div>
                   <Tag color="green" className="text-sm font-medium">
-                    {viewingSection.department || viewingSection.course?.department || "Not specified"}
+                    {viewingSection.department ||
+                      viewingSection.course?.department ||
+                      "Not specified"}
                   </Tag>
                 </div>
               </div>
@@ -1392,51 +1429,77 @@ const CourseManagement: React.FC = () => {
                   📅 Semester
                 </label>
                 <div className="text-base font-medium text-gray-900 dark:text-gray-100">
-                  {(viewingSection as Section & { _semesterName?: string; semester?: string })._semesterName || 
-                   (viewingSection as Section & { _semesterName?: string; semester?: string }).semester || 
-                   "Not specified"}
+                  {(
+                    viewingSection as Section & {
+                      _semesterName?: string;
+                      semester?: string;
+                    }
+                  )._semesterName ||
+                    (
+                      viewingSection as Section & {
+                        _semesterName?: string;
+                        semester?: string;
+                      }
+                    ).semester ||
+                    "Not specified"}
                 </div>
               </div>
             </div>
-            
+
             {/* Instructor Section */}
             <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4 border border-amber-200 dark:border-amber-700">
               <label className="block text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-2">
                 👨‍🏫 Instructor
               </label>
               <div className="text-base font-medium text-gray-900 dark:text-gray-100">
-                {(viewingSection as Section & { _instructorName?: string })._instructorName || 
-                 viewingSection.instructor?.name || 
-                 <span className="italic text-gray-400 dark:text-gray-500">Not assigned</span>}
+                {(viewingSection as Section & { _instructorName?: string })
+                  ._instructorName ||
+                  viewingSection.instructor?.name || (
+                    <span className="italic text-gray-400 dark:text-gray-500">
+                      Not assigned
+                    </span>
+                  )}
               </div>
             </div>
-            
+
             {/* Schedule Section */}
             <div className="bg-cyan-50 dark:bg-cyan-900/20 rounded-lg p-4 border border-cyan-200 dark:border-cyan-700">
               <label className="block text-xs font-semibold text-cyan-600 dark:text-cyan-400 uppercase tracking-wide mb-3">
                 🕒 Schedule
               </label>
               <div>
-                {viewingSection.schedule && viewingSection.schedule.length > 0 ? (
+                {viewingSection.schedule &&
+                viewingSection.schedule.length > 0 ? (
                   <div className="space-y-3">
                     {viewingSection.schedule.map((sched, index) => (
-                      <div key={index} className="bg-white dark:bg-gray-700 rounded-md p-3 border border-cyan-100 dark:border-cyan-800">
+                      <div
+                        key={index}
+                        className="bg-white dark:bg-gray-700 rounded-md p-3 border border-cyan-100 dark:border-cyan-800"
+                      >
                         <div className="flex items-center space-x-3 text-sm">
-                          <Tag color="blue" className="font-medium">{sched.day}</Tag>
-                          <span className="text-gray-900 dark:text-gray-100 font-medium">{sched.startTime} - {sched.endTime}</span>
+                          <Tag color="blue" className="font-medium">
+                            {sched.day}
+                          </Tag>
+                          <span className="text-gray-900 dark:text-gray-100 font-medium">
+                            {sched.startTime} - {sched.endTime}
+                          </span>
                           {sched.room && (
-                            <Tag color="orange" className="font-medium">{sched.room}</Tag>
+                            <Tag color="orange" className="font-medium">
+                              {sched.room}
+                            </Tag>
                           )}
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <span className="text-gray-400 dark:text-gray-500 italic">No schedule information available</span>
+                  <span className="text-gray-400 dark:text-gray-500 italic">
+                    No schedule information available
+                  </span>
                 )}
               </div>
             </div>
-            
+
             {/* Enrollment Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
@@ -1444,7 +1507,12 @@ const CourseManagement: React.FC = () => {
                   👥 Max Capacity
                 </label>
                 <div className="text-base">
-                  <Badge count={viewingSection.maxCapacity || 0} showZero color="purple" className="text-lg" />
+                  <Badge
+                    count={viewingSection.maxCapacity || 0}
+                    showZero
+                    color="purple"
+                    className="text-lg"
+                  />
                 </div>
               </div>
               <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-4 border border-emerald-200 dark:border-emerald-700">
@@ -1452,11 +1520,16 @@ const CourseManagement: React.FC = () => {
                   ✅ Current Enrollment
                 </label>
                 <div className="text-base">
-                  <Badge count={viewingSection.currentEnrollment || 0} showZero color="green" className="text-lg" />
+                  <Badge
+                    count={viewingSection.currentEnrollment || 0}
+                    showZero
+                    color="green"
+                    className="text-lg"
+                  />
                 </div>
               </div>
             </div>
-            
+
             {/* Metadata Section */}
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

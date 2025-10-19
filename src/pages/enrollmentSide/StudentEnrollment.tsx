@@ -153,7 +153,7 @@ const StudentEnrollmentComponent: React.FC = () => {
     try {
       setStudentEnrollmentsLoading(true);
       const data = await enrollmentService.getAllStudentEnrollments();
-      console.log("Fetched student enrollments:", data);
+      // console.log("Fetched student enrollments:", data);
       setStudentEnrollments(data || []);
     } catch (error) {
       console.error("Error fetching student enrollments:", error);
@@ -169,7 +169,7 @@ const StudentEnrollmentComponent: React.FC = () => {
     try {
       setStudentsLoading(true);
       const data = await enrollmentService.getStudents();
-      console.log("Fetched students:", data);
+      // console.log("Fetched students:", data);
       setStudents(data || []);
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -184,7 +184,7 @@ const StudentEnrollmentComponent: React.FC = () => {
     try {
       setSemestersLoading(true);
       const data = await enrollmentService.getSemesters();
-      console.log("Fetched semesters:", data);
+      // console.log("Fetched semesters:", data);
       setSemesters(data || []);
     } catch (error) {
       console.error("Error fetching semesters:", error);
@@ -199,7 +199,7 @@ const StudentEnrollmentComponent: React.FC = () => {
     try {
       setCoursesLoading(true);
       const data = await courseService.getAllCourses();
-      console.log("Fetched courses:", data);
+      // console.log("Fetched courses:", data);
       setCourses(data || []);
     } catch (error) {
       console.error("Error fetching courses:", error);
