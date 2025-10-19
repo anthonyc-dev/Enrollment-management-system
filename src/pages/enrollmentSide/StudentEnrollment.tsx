@@ -98,12 +98,12 @@ const StudentEnrollmentComponent: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingStudentEnrollment, setEditingStudentEnrollment] =
     useState<StudentEnrollment | null>(null);
-  
+
   // View modal for Current Enrollments
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingStudentEnrollment, setViewingStudentEnrollment] =
     useState<StudentEnrollment | null>(null);
-  
+
   // Edit form state
   const [editFormData, setEditFormData] = useState<{
     name: string;
@@ -785,7 +785,7 @@ const StudentEnrollmentComponent: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-700 flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-slate-300 flex items-center gap-3">
             <TeamOutlined className="text-green-600" />
             Student Enrollment
           </h1>
@@ -1199,11 +1199,15 @@ const StudentEnrollmentComponent: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Department</p>
-                  <p className="font-medium">{viewingStudentEnrollment.department}</p>
+                  <p className="font-medium">
+                    {viewingStudentEnrollment.department}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Year Level</p>
-                  <p className="font-medium">{viewingStudentEnrollment.yearLevel}</p>
+                  <p className="font-medium">
+                    {viewingStudentEnrollment.yearLevel}
+                  </p>
                 </div>
               </div>
             </Card>
@@ -1213,22 +1217,30 @@ const StudentEnrollmentComponent: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-500">Semester</p>
-                  <p className="font-medium">{viewingStudentEnrollment.semester}</p>
+                  <p className="font-medium">
+                    {viewingStudentEnrollment.semester}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Academic Year</p>
-                  <p className="font-medium">{viewingStudentEnrollment.academicYear}</p>
+                  <p className="font-medium">
+                    {viewingStudentEnrollment.academicYear}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Total Units</p>
                   <p className="font-medium">
-                    <Tag color="orange">{viewingStudentEnrollment.totalUnits} units</Tag>
+                    <Tag color="orange">
+                      {viewingStudentEnrollment.totalUnits} units
+                    </Tag>
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Enrollment Date</p>
                   <p className="font-medium">
-                    {new Date(viewingStudentEnrollment.createdAt).toLocaleDateString()}
+                    {new Date(
+                      viewingStudentEnrollment.createdAt
+                    ).toLocaleDateString()}
                   </p>
                 </div>
               </div>
@@ -1237,26 +1249,32 @@ const StudentEnrollmentComponent: React.FC = () => {
             <Card>
               <h5 className="font-medium mb-3">Enrolled Courses</h5>
               <div className="space-y-2">
-                {viewingStudentEnrollment.selectedCourses.map((courseString, index) => {
-                  const courseParts = courseString.split(" - ");
-                  const courseCode = courseParts[0];
-                  const courseName = courseParts[1]?.split(" (")[0];
-                  const unitsMatch = courseString.match(/\((\d+)\s+units?\)/);
-                  const units = unitsMatch ? unitsMatch[1] : "0";
-                  
-                  return (
-                    <div
-                      key={index}
-                      className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
-                    >
-                      <div>
-                        <div className="font-medium text-blue-600">{courseCode}</div>
-                        <div className="text-sm text-gray-600">{courseName}</div>
+                {viewingStudentEnrollment.selectedCourses.map(
+                  (courseString, index) => {
+                    const courseParts = courseString.split(" - ");
+                    const courseCode = courseParts[0];
+                    const courseName = courseParts[1]?.split(" (")[0];
+                    const unitsMatch = courseString.match(/\((\d+)\s+units?\)/);
+                    const units = unitsMatch ? unitsMatch[1] : "0";
+
+                    return (
+                      <div
+                        key={index}
+                        className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+                      >
+                        <div>
+                          <div className="font-medium text-blue-600">
+                            {courseCode}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {courseName}
+                          </div>
+                        </div>
+                        <Tag color="blue">{units} units</Tag>
                       </div>
-                      <Tag color="blue">{units} units</Tag>
-                    </div>
-                  );
-                })}
+                    );
+                  }
+                )}
               </div>
             </Card>
           </div>
@@ -1275,7 +1293,10 @@ const StudentEnrollmentComponent: React.FC = () => {
           if (!editingStudentEnrollment) return;
 
           // Validate required fields - only validate selected courses for admin update
-          if (!editFormData.selectedCourses || editFormData.selectedCourses.length === 0) {
+          if (
+            !editFormData.selectedCourses ||
+            editFormData.selectedCourses.length === 0
+          ) {
             message.error("At least one course must be selected");
             return;
           }
@@ -1298,22 +1319,25 @@ const StudentEnrollmentComponent: React.FC = () => {
             setEditingStudentEnrollment(null);
           } catch (error: unknown) {
             console.error("Error updating student enrollment:", error);
-            
+
             // Provide more specific error messages
             let errorMessage = "Failed to update courses. Please try again.";
-            
+
             if (error instanceof AxiosError) {
               if (error.response?.data?.message) {
                 errorMessage = error.response.data.message;
               } else if (error.response?.status === 500) {
-                errorMessage = "Server error occurred. Please check the data and try again.";
+                errorMessage =
+                  "Server error occurred. Please check the data and try again.";
               } else if (error.response?.status === 404) {
-                errorMessage = "Enrollment not found. It may have been deleted.";
+                errorMessage =
+                  "Enrollment not found. It may have been deleted.";
               } else if (error.response?.status === 400) {
-                errorMessage = "Invalid data provided. Please check your inputs.";
+                errorMessage =
+                  "Invalid data provided. Please check your inputs.";
               }
             }
-            
+
             message.error(errorMessage);
           } finally {
             setUpdateLoading(false);
@@ -1326,7 +1350,9 @@ const StudentEnrollmentComponent: React.FC = () => {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Student Name (Read-only)</label>
+              <label className="block text-sm font-medium mb-1">
+                Student Name (Read-only)
+              </label>
               <Input
                 value={editFormData.name}
                 disabled
@@ -1334,7 +1360,9 @@ const StudentEnrollmentComponent: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Student Number (Read-only)</label>
+              <label className="block text-sm font-medium mb-1">
+                Student Number (Read-only)
+              </label>
               <Input
                 value={editFormData.studentNumber}
                 disabled
@@ -1345,7 +1373,9 @@ const StudentEnrollmentComponent: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Department (Read-only)</label>
+              <label className="block text-sm font-medium mb-1">
+                Department (Read-only)
+              </label>
               <Select
                 value={editFormData.department}
                 disabled
@@ -1354,7 +1384,9 @@ const StudentEnrollmentComponent: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Year Level (Read-only)</label>
+              <label className="block text-sm font-medium mb-1">
+                Year Level (Read-only)
+              </label>
               <Select
                 value={editFormData.yearLevel}
                 disabled
@@ -1372,7 +1404,9 @@ const StudentEnrollmentComponent: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Semester (Read-only)</label>
+              <label className="block text-sm font-medium mb-1">
+                Semester (Read-only)
+              </label>
               <Input
                 value={editFormData.semester}
                 disabled
@@ -1380,7 +1414,9 @@ const StudentEnrollmentComponent: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Academic Year (Read-only)</label>
+              <label className="block text-sm font-medium mb-1">
+                Academic Year (Read-only)
+              </label>
               <Input
                 value={editFormData.academicYear}
                 disabled
@@ -1390,7 +1426,9 @@ const StudentEnrollmentComponent: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Selected Courses</label>
+            <label className="block text-sm font-medium mb-2">
+              Selected Courses
+            </label>
             <div className="space-y-2 max-h-40 overflow-y-auto">
               {editFormData.selectedCourses.map((courseString, index) => {
                 const courseParts = courseString.split(" - ");
@@ -1398,7 +1436,7 @@ const StudentEnrollmentComponent: React.FC = () => {
                 const courseName = courseParts[1]?.split(" (")[0];
                 const unitsMatch = courseString.match(/\((\d+)\s+units?\)/);
                 const units = unitsMatch ? unitsMatch[1] : "0";
-                
+
                 return (
                   <div
                     key={index}
@@ -1416,9 +1454,10 @@ const StudentEnrollmentComponent: React.FC = () => {
                         size="small"
                         icon={<MinusOutlined />}
                         onClick={() => {
-                          const newCourses = editFormData.selectedCourses.filter(
-                            (_, i) => i !== index
-                          );
+                          const newCourses =
+                            editFormData.selectedCourses.filter(
+                              (_, i) => i !== index
+                            );
                           setEditFormData({
                             ...editFormData,
                             selectedCourses: newCourses,

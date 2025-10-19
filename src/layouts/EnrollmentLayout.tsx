@@ -11,7 +11,7 @@ const EnrollmentLayout: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-[#1A1A1D]">
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div

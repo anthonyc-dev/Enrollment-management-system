@@ -22,6 +22,7 @@ import {
   EditOutlined,
   SearchOutlined,
   FilterOutlined,
+  EyeOutlined,
 } from "@ant-design/icons";
 import { type ColumnsType } from "antd/es/table";
 
@@ -35,7 +36,7 @@ const { Option } = Select;
 const API_BASE_URL = "/student-management";
 
 const departments = [
-  "CECS", // Changed to match your reference data; add more mappings if needed
+  "CECS",
   "Computer Science",
   "Information Technology",
   "Computer Engineering",
@@ -51,7 +52,9 @@ const statuses = ["Active", "Inactive", "Graduated", "Dropped"];
 const StudentManagement: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
   const [searchText, setSearchText] = useState("");
   const [filters, setFilters] = useState({
     department: "",
@@ -62,7 +65,6 @@ const StudentManagement: React.FC = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState<boolean>(false);
 
-  // Added programs field based on reference example
   const programs = [
     "BS-Computer Science",
     "BS-Information Technology",
@@ -97,12 +99,22 @@ const StudentManagement: React.FC = () => {
     fetchStudents();
   }, []);
 
-  // Reset form when modal opens for adding new student
+  // Handle form fields when modal opens
   useEffect(() => {
-    if (isModalOpen && !editingStudent) {
-      form.resetFields();
-      // Set default status to 'Active' for new students
-      form.setFieldsValue({ status: 'Active' });
+    if (isModalOpen) {
+      if (editingStudent) {
+        // For editing, populate form with student data
+        form.setFieldsValue({
+          ...editingStudent,
+          dateOfBirth: editingStudent.dateOfBirth
+            ? dayjs(editingStudent.dateOfBirth)
+            : null,
+        });
+      } else {
+        // For new student, reset and set default status
+        form.resetFields();
+        form.setFieldsValue({ status: "Active" });
+      }
     }
   }, [isModalOpen, editingStudent, form]);
 
@@ -133,11 +145,12 @@ const StudentManagement: React.FC = () => {
 
   const handleEditStudent = (student: Student) => {
     setEditingStudent(student);
-    form.setFieldsValue({
-      ...student,
-      dateOfBirth: student.dateOfBirth ? dayjs(student.dateOfBirth) : null,
-    });
     setIsModalOpen(true);
+  };
+
+  const handleViewStudent = (student: Student) => {
+    setViewingStudent(student);
+    setIsViewModalOpen(true);
   };
 
   const handleDeleteStudent = (id: string) => {
@@ -347,14 +360,22 @@ const StudentManagement: React.FC = () => {
         <Space>
           <Button
             type="text"
+            icon={<EyeOutlined />}
+            onClick={() => handleViewStudent(record)}
+            title="View Student"
+          />
+          <Button
+            type="text"
             icon={<EditOutlined />}
             onClick={() => handleEditStudent(record)}
+            title="Edit Student"
           />
           <Button
             type="text"
             danger
             icon={<DeleteOutlined />}
             onClick={() => handleDeleteStudent(record.id)}
+            title="Delete Student"
           />
         </Space>
       ),
@@ -367,7 +388,7 @@ const StudentManagement: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-700 flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-slate-300 flex items-center gap-3">
             <UserOutlined className="text-blue-600" />
             Student Management
           </h1>
@@ -560,7 +581,7 @@ const StudentManagement: React.FC = () => {
         onOk={handleModalOk}
         okText={editingStudent ? "Update Student" : "Add Student"}
         width={600}
-        destroyOnHidden
+        destroyOnClose={false}
       >
         <Form form={form} layout="vertical" preserve={false}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -687,6 +708,175 @@ const StudentManagement: React.FC = () => {
             </Form.Item>
           </div>
         </Form>
+      </Modal>
+
+      {/* Dark-Themed View Student Modal */}
+      <Modal
+        title={
+          <span className="text-white text-lg font-semibold">
+            📋 Student Details
+          </span>
+        }
+        open={isViewModalOpen}
+        onCancel={() => {
+          setIsViewModalOpen(false);
+          setViewingStudent(null);
+        }}
+        footer={[
+          <Button 
+            key="close" 
+            type="primary"
+            className="bg-blue-600 hover:bg-blue-700 border-blue-600"
+            onClick={() => {
+              setIsViewModalOpen(false);
+              setViewingStudent(null);
+            }}
+          >
+            Close
+          </Button>
+        ]}
+        width={700}
+        className="dark-modal"
+        styles={{
+          mask: { backgroundColor: 'rgba(0, 0, 0, 0.7)' },
+          content: { 
+            backgroundColor: '#1f2937',
+            border: '1px solid #374151',
+            borderRadius: '12px'
+          },
+          header: { 
+            backgroundColor: '#1f2937',
+            borderBottom: '1px solid #374151',
+            borderRadius: '12px 12px 0 0'
+          },
+          body: { 
+            backgroundColor: '#1f2937',
+            color: '#f3f4f6'
+          },
+          footer: {
+            backgroundColor: '#1f2937',
+            borderTop: '1px solid #374151',
+            borderRadius: '0 0 12px 12px'
+          }
+        }}
+      >
+        {viewingStudent && (
+          <div className="space-y-6 text-gray-100">
+            {/* Personal Information Section */}
+            <div className="border-b border-gray-600 pb-4">
+              <h3 className="text-lg font-semibold text-blue-400 mb-4 flex items-center gap-2">
+                👤 Personal Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <div className="text-sm text-gray-400 mb-1">Student Number</div>
+                  <div className="text-lg font-mono text-blue-300">
+                    {viewingStudent.schoolId}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-400 mb-1">Full Name</div>
+                  <div className="text-lg text-white font-medium">
+                    {viewingStudent.firstName} {viewingStudent.middleName ? viewingStudent.middleName + ' ' : ''}{viewingStudent.lastName}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-400 mb-1">Date of Birth</div>
+                  <div className="text-lg text-white">
+                    {viewingStudent.dateOfBirth ? dayjs(viewingStudent.dateOfBirth).format("MMMM DD, YYYY") : "N/A"}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-400 mb-1">Gender</div>
+                  <div className="mt-1">
+                    <Tag color={viewingStudent.gender === 'Male' ? 'blue' : 'pink'} className="text-sm px-3 py-1">
+                      {viewingStudent.gender}
+                    </Tag>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Information Section */}
+            <div className="border-b border-gray-600 pb-4">
+              <h3 className="text-lg font-semibold text-green-400 mb-4 flex items-center gap-2">
+                📞 Contact Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <div className="text-sm text-gray-400 mb-1">Email Address</div>
+                  <div className="text-lg font-mono text-green-300">
+                    {viewingStudent.email}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-400 mb-1">Phone Number</div>
+                  <div className="text-lg text-white">
+                    {viewingStudent.phone || "N/A"}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-6">
+                <div className="text-sm text-gray-400 mb-1">Address</div>
+                <div className="text-lg text-white">
+                  {viewingStudent.address}
+                </div>
+              </div>
+            </div>
+
+            {/* Academic Information Section */}
+            <div>
+              <h3 className="text-lg font-semibold text-purple-400 mb-4 flex items-center gap-2">
+                🎓 Academic Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <div className="text-sm text-gray-400 mb-1">Department</div>
+                  <div className="mt-1">
+                    <Tag color="blue" className="text-sm px-3 py-1">
+                      {viewingStudent.department}
+                    </Tag>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-400 mb-1">Year Level</div>
+                  <div className="mt-1">
+                    <Tag color="green" className="text-sm px-3 py-1">
+                      {viewingStudent.yearLevel}
+                    </Tag>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-400 mb-1">Program</div>
+                  <div className="mt-1">
+                    <Tag color="purple" className="text-sm px-3 py-1">
+                      {viewingStudent.program}
+                    </Tag>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-400 mb-1">Status</div>
+                  <div className="mt-1">
+                    <Tag
+                      color={
+                        viewingStudent.status === "Active"
+                          ? "green"
+                          : viewingStudent.status === "Inactive"
+                          ? "orange"
+                          : viewingStudent.status === "Graduated"
+                          ? "blue"
+                          : "red"
+                      }
+                      className="text-sm px-3 py-1 font-semibold"
+                    >
+                      {viewingStudent.status}
+                    </Tag>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

@@ -27,7 +27,7 @@ const FormInput: React.FC<FormInputProps> = ({
       {label && (
         <label
           htmlFor={id}
-          className="block text-sm font-medium text-gray-800 mb-2"
+          className="block text-sm font-medium text-gray-600 mb-2"
         >
           {label}
         </label>

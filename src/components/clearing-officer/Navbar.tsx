@@ -32,7 +32,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
   return (
     <nav>
       {/* backdrop-blur-md border-b border-border/50 */}
-      <div className=" bg-white backdrop-blur-md   mx-auto px-4 sm:px-6 lg:px-8">
+      <div className=" bg-[#0F0E0E] backdrop-blur-md   mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Title */}
           <Button
@@ -68,7 +68,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
               className="relative"
               onClick={() => setIsNotificationOpen(true)}
             >
-              <BellIcon className="h-10 w-10" />
+              <BellIcon className="h-10 w-10 text-white/50" />
               {notificationCount > 0 && (
                 <Badge
                   variant="destructive"
@@ -88,7 +88,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm">
-                  <User size={24} />
+                  <User size={24} className="text-white/50" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">

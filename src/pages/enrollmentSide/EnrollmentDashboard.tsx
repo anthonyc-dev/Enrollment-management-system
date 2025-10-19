@@ -28,7 +28,7 @@ import type { EnrollmentRecord } from "../../types/enrollment";
 const EnrollmentDashboard: React.FC = () => {
   const [selectedSemester] = useState<string>("semester-2");
 
-  const { stats, enrollmentRecords, semesters, students } = enrollmentDummyData;
+  const { stats, enrollmentRecords, semesters } = enrollmentDummyData;
 
   const currentSemester = semesters.find((s) => s.id === selectedSemester);
   const currentSemesterRecords = enrollmentRecords.filter(
@@ -114,7 +114,7 @@ const EnrollmentDashboard: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-700 flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-slate-300 flex items-center gap-3">
             <CalendarOutlined className="text-blue-600" />
             Enrollment Management
           </h1>
@@ -146,9 +146,9 @@ const EnrollmentDashboard: React.FC = () => {
               prefix={<UserOutlined style={{ color: "#1890ff" }} />}
               valueStyle={{ color: "#3f8600" }}
             />
-            <div style={{ color: "#3f8600", fontSize: "14px" }}>
+            {/* <div style={{ color: "#3f8600", fontSize: "14px" }}>
               Active: {students.filter((s) => s.status === "Active").length}
-            </div>
+            </div> */}
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
@@ -179,9 +179,9 @@ const EnrollmentDashboard: React.FC = () => {
               prefix={<TeamOutlined style={{ color: "#fa8c16" }} />}
               valueStyle={{ color: "#3f8600" }}
             />
-            <div style={{ color: "#3f8600", fontSize: "14px" }}>
+            {/* <div style={{ color: "#3f8600", fontSize: "14px" }}>
               This Semester: {currentSemesterRecords.length}
-            </div>
+            </div> */}
           </Card>
         </Col>
       </Row>
@@ -217,60 +217,11 @@ const EnrollmentDashboard: React.FC = () => {
         </div>
       </Card>
 
-      {/* Quick Actions */}
-      <Row gutter={[16, 16]} className="mb-6 mt-6">
-        <Col xs={24} sm={12} md={8}>
-          <Card hoverable>
-            <div className="text-center">
-              <UserOutlined className="text-4xl text-blue-600 mb-3" />
-              <h3 className="text-lg font-semibold mb-2">Student Management</h3>
-              <p className="text-gray-600 mb-4">
-                Add, edit, and manage student accounts
-              </p>
-              <Link to="/students">
-                <Button type="primary" block>
-                  Manage Students
-                </Button>
-              </Link>
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={8}>
-          <Card hoverable>
-            <div className="text-center">
-              <BookOutlined className="text-4xl text-green-600 mb-3" />
-              <h3 className="text-lg font-semibold mb-2">Course Management</h3>
-              <p className="text-gray-600 mb-4">
-                Create and manage courses and sections
-              </p>
-              <Link to="/courses">
-                <Button type="primary" block>
-                  Manage Courses
-                </Button>
-              </Link>
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={8}>
-          <Card hoverable>
-            <div className="text-center">
-              <TeamOutlined className="text-4xl text-purple-600 mb-3" />
-              <h3 className="text-lg font-semibold mb-2">Enrollment Records</h3>
-              <p className="text-gray-600 mb-4">
-                View and update enrollment records
-              </p>
-              <Link to="/records">
-                <Button type="primary" block>
-                  View Records
-                </Button>
-              </Link>
-            </div>
-          </Card>
-        </Col>
-      </Row>
-
       {/* Recent Enrollments */}
-      <Card title="Recent Enrollments" className="mb-6">
+      <Card
+        title="Recent Enrollments"
+        style={{ marginBottom: "16px", marginTop: "16px" }}
+      >
         <Table
           columns={columns}
           dataSource={currentSemesterRecords}

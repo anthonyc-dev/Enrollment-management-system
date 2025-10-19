@@ -89,9 +89,9 @@ const SemesterManagement: React.FC = () => {
       console.log("Valid semesters after filtering:", validSemesters); // Debug log
       setSemesters(validSemesters);
 
-      if (data && data.length > 0) {
-        message.success(`Successfully loaded ${data.length} semester(s)`);
-      }
+      // if (data && data.length > 0) {
+      //   message.success(`Successfully loaded ${data.length} semester(s)`);
+      // }
     } catch (error: unknown) {
       console.error("Failed to load semesters", error);
 
@@ -163,24 +163,21 @@ const SemesterManagement: React.FC = () => {
   };
 
   const handleEditSemester = (semester: Semester) => {
-    console.log("handleEditSemester called with:", semester); // Debug log
-    console.log("Semester ID:", semester.id); // Debug log
-
     setEditingSemester(semester);
 
     // Parse existing date strings for DatePicker
     const parseSemesterDuration = (duration: string) => {
       // Try to extract dates from format like "June 2025 – October 2025"
-      const parts = duration.split('–').map(part => part.trim());
+      const parts = duration.split("–").map((part) => part.trim());
       if (parts.length === 2) {
         try {
-          const startDate = dayjs(parts[0], 'MMMM YYYY');
-          const endDate = dayjs(parts[1], 'MMMM YYYY');
+          const startDate = dayjs(parts[0], "MMMM YYYY");
+          const endDate = dayjs(parts[1], "MMMM YYYY");
           if (startDate.isValid() && endDate.isValid()) {
             return [startDate, endDate];
           }
         } catch {
-          console.warn('Could not parse semester duration:', duration);
+          console.warn("Could not parse semester duration:", duration);
         }
       }
       return null;
@@ -188,27 +185,27 @@ const SemesterManagement: React.FC = () => {
 
     const parseEnrollmentPeriod = (period: string) => {
       // Try to extract dates from format like "May 1 – June 15, 2025"
-      const parts = period.split('–').map(part => part.trim());
+      const parts = period.split("–").map((part) => part.trim());
       if (parts.length === 2) {
         try {
           // Handle formats like "May 1, 2025" or "May 1"
           let startPart = parts[0];
           const endPart = parts[1];
-          
+
           // If year is only in the end part, add it to start part
-          if (!startPart.includes(',') && endPart.includes(',')) {
-            const year = endPart.split(',')[1].trim();
+          if (!startPart.includes(",") && endPart.includes(",")) {
+            const year = endPart.split(",")[1].trim();
             startPart = `${startPart}, ${year}`;
           }
-          
-          const startDate = dayjs(startPart, ['MMMM D, YYYY', 'MMM D, YYYY']);
-          const endDate = dayjs(endPart, ['MMMM D, YYYY', 'MMM D, YYYY']);
-          
+
+          const startDate = dayjs(startPart, ["MMMM D, YYYY", "MMM D, YYYY"]);
+          const endDate = dayjs(endPart, ["MMMM D, YYYY", "MMM D, YYYY"]);
+
           if (startDate.isValid() && endDate.isValid()) {
             return [startDate, endDate];
           }
         } catch {
-          console.warn('Could not parse enrollment period:', period);
+          console.warn("Could not parse enrollment period:", period);
         }
       }
       return null;
@@ -452,18 +449,22 @@ const SemesterManagement: React.FC = () => {
       console.log("Editing semester:", editingSemester); // Debug log
 
       // Format date ranges back to strings
-      const formatSemesterDuration = (dateRange: [dayjs.Dayjs, dayjs.Dayjs] | null) => {
+      const formatSemesterDuration = (
+        dateRange: [dayjs.Dayjs, dayjs.Dayjs] | null
+      ) => {
         if (dateRange && Array.isArray(dateRange) && dateRange.length === 2) {
           const [start, end] = dateRange;
-          return `${start.format('MMMM YYYY')} – ${end.format('MMMM YYYY')}`;
+          return `${start.format("MMMM YYYY")} – ${end.format("MMMM YYYY")}`;
         }
         return "";
       };
 
-      const formatEnrollmentPeriod = (dateRange: [dayjs.Dayjs, dayjs.Dayjs] | null) => {
+      const formatEnrollmentPeriod = (
+        dateRange: [dayjs.Dayjs, dayjs.Dayjs] | null
+      ) => {
         if (dateRange && Array.isArray(dateRange) && dateRange.length === 2) {
           const [start, end] = dateRange;
-          return `${start.format('MMMM D')} – ${end.format('MMMM D, YYYY')}`;
+          return `${start.format("MMMM D")} – ${end.format("MMMM D, YYYY")}`;
         }
         return "";
       };
@@ -713,7 +714,7 @@ const SemesterManagement: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-700 flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-slate-300 flex items-center gap-3">
             <CalendarOutlined className="text-purple-600" />
             Semester Management
           </h1>
@@ -985,7 +986,7 @@ const SemesterManagement: React.FC = () => {
               picker="month"
               format="MMMM YYYY"
               placeholder={["Start Month", "End Month"]}
-              style={{ width: '100%' }}
+              style={{ width: "100%" }}
             />
           </Form.Item>
 
@@ -999,7 +1000,7 @@ const SemesterManagement: React.FC = () => {
             <DatePicker.RangePicker
               format="MMMM D, YYYY"
               placeholder={["Start Date", "End Date"]}
-              style={{ width: '100%' }}
+              style={{ width: "100%" }}
             />
           </Form.Item>
         </Form>

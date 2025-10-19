@@ -124,7 +124,7 @@ export default function EnrollmentLogin() {
       </div>
 
       {/* Right side: Login form */}
-      <div className="flex flex-col justify-center flex-1 px-6 py-12 bg-white">
+      <div className="flex flex-col justify-center flex-1 px-6 py-12 bg-[#0F0E0E]">
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
           {/* Logo and branding */}
           <div className="flex justify-center mb-6">
@@ -135,7 +135,7 @@ export default function EnrollmentLogin() {
                 alt="Enrollment System Logo"
               />
               <div>
-                <h2 className="text-2xl font-bold text-gray-800">
+                <h2 className="text-2xl font-bold text-gray-300">
                   Enrollment System
                 </h2>
                 <p className="text-sm text-gray-500">NCMC Clearance Portal</p>
@@ -143,7 +143,7 @@ export default function EnrollmentLogin() {
             </div>
           </div>
 
-          <h2 className="text-center text-3xl font-bold tracking-tight text-gray-700 mb-2">
+          <h2 className="text-center text-3xl font-bold tracking-tight text-gray-300 mb-2">
             Welcome back!
           </h2>
           <p className="text-center text-sm text-gray-600">

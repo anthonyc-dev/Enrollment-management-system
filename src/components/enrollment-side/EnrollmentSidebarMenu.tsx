@@ -1,6 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
 import {
-  Search,
   ChevronLeft,
   LayoutDashboard,
   Users,
@@ -61,23 +60,30 @@ export function EnrollmentSideMenu({ closeSidebar }: CloseSidebarProps) {
   return (
     <aside
       className={cn(
-        "h-screen bg-[#00171f] transition-all duration-300 ease-in-out flex flex-col"
+        "h-screen bg-[#0F0E0E] transition-all duration-300 ease-in-out flex flex-col"
       )}
     >
       {/* Header */}
-      <div className="flex h-16 items-center justify-between px-4 border-gray-200">
-        <div className="flex items-center gap-2 animate-fade-in">
-          <div className="flex items-center gap-2 animate-fade-in">
-            <img
-              className="h-12 w-12 rounded-md object-cover"
-              src="/MICRO FLUX LOGO.png"
-              alt="Menu icon"
-            />
-          </div>
+      <div className="flex h-16 items-center justify-between border-gray-200 mt-3">
+        <div className="flex h-20 items-center justify-between px-4  backdrop-blur-sm">
+          <div className="flex items-center gap-3 animate-fade-in">
+            <div className="relative">
+              <img
+                className="h-12 w-12 rounded-xl object-cover ring-2 ring-blue-500/30 shadow-lg"
+                src="/MICRO FLUX LOGO.png"
+                alt="Menu icon"
+              />
+              <div className="absolute -top-1 -right-1 h-4 w-4 bg-emerald-500 rounded-full border-2 border-slate-800 animate-pulse"></div>
+            </div>
 
-          <div>
-            <span className="font-semibold text-white text-lg">Enrollment</span>
-            <p className="text-xs text-gray-400">Management System</p>
+            <div>
+              <span className="font-bold text-xl bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
+                Enrollment
+              </span>
+              <p className="text-xs text-slate-400 font-medium">
+                Management System v2.0
+              </p>
+            </div>
           </div>
         </div>
 
@@ -95,14 +101,14 @@ export function EnrollmentSideMenu({ closeSidebar }: CloseSidebarProps) {
 
       {/* Search */}
       <div className="px-3 mt-4">
-        <div className="relative">
+        {/* <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Search enrollment..."
             className="w-full rounded-lg bg-gray-50 pl-10 pr-4 py-2 text-sm text-gray-700 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
           />
-        </div>
+        </div> */}
       </div>
 
       {/* Navigation */}
@@ -123,13 +129,13 @@ export function EnrollmentSideMenu({ closeSidebar }: CloseSidebarProps) {
                 className={cn(
                   "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-300 group cursor-pointer",
                   active
-                    ? "bg-blue-600 text-white shadow-sm"
+                    ? "bg-[#118B50] text-white shadow-sm"
                     : "text-gray-200 hover:bg-gray-800 hover:text-white"
                 )}
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 {active && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-700 opacity-90 rounded-lg z-0" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-[#118B50] opacity-90 rounded-lg z-0" />
                 )}
                 <Icon
                   className={cn(
@@ -147,21 +153,21 @@ export function EnrollmentSideMenu({ closeSidebar }: CloseSidebarProps) {
         </nav>
 
         {/* Quick Actions */}
-        <div className="px-3 py-4">
+        <div className=" py-4">
           <h4 className="text-xs font-semibold text-gray-200 uppercase mb-2">
             Quick Actions
           </h4>
           <div className="space-y-2">
             <NavLink
               to="/enroll"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-all duration-300"
+              className="flex items-center gap-2 rounded-lg text-white px-3 py-2.5 text-sm font-medium transition-all duration-300 group cursor-pointer hover:bg-gray-800"
             >
               <UserPlus className="h-4 w-4" />
               <span>Quick Enroll</span>
             </NavLink>
             <NavLink
               to="/records"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-all duration-300"
+              className="flex items-center gap-2 rounded-lg text-white px-3 py-2.5 text-sm font-medium transition-all duration-300 group cursor-pointer hover:bg-gray-800"
             >
               <FileText className="h-4 w-4" />
               <span>View Records</span>

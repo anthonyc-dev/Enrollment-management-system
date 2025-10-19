@@ -299,7 +299,7 @@ const EnrollmentRecords: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-700 flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-slate-300 flex items-center gap-3">
             <TeamOutlined className="text-purple-600" />
             Enrollment Records
           </h1>
