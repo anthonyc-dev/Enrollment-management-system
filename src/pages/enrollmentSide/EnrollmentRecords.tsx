@@ -31,6 +31,7 @@ import type {
   Semester,
   Section,
 } from "../../types/enrollment";
+import { departments, yearLevels } from "@/data/subData";
 
 const { Option } = Select;
 
@@ -59,21 +60,6 @@ const EnrollmentRecords: React.FC = () => {
   );
   const [form] = Form.useForm();
 
-  // Static filter options (will be dynamically populated from real data)
-  const departments = [
-    "Computer Science",
-    "Information Technology",
-    "Computer Engineering",
-    "Information Systems",
-    "Software Engineering",
-  ];
-  const yearLevels = [
-    "1st Year",
-    "2nd Year",
-    "3rd Year",
-    "4th Year",
-    "5th Year",
-  ];
   const statuses = ["Enrolled", "Dropped", "Withdrawn", "Completed"];
 
   // Transform student enrollments to enrollment records

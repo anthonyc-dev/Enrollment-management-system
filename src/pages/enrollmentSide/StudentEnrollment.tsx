@@ -300,6 +300,8 @@ const StudentEnrollmentComponent: React.FC = () => {
         return "4th Year";
       case 5:
         return "5th Year";
+      case 6:
+        return "Old Student";
       default:
         return undefined;
     }

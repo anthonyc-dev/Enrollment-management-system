@@ -1,4 +1,4 @@
-import { BellIcon, LogOut, Menu, QrCode, User } from "lucide-react";
+import { BellIcon, LogOut, Menu, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -46,15 +46,24 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
             {/* <h1 className="text-xl font-bold text-foreground">Your App</h1> */}
             {/* Search bar or other center content */}
             <div className="flex-1 flex justify-center">
-              <div className="relative">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
-                  <QrCode className="h-5 w-5 text-gray-500" />
-                  <span className="text-sm text-gray-600">QR Scanner</span>
-                </Button>
+              <div className="flex items-center gap-3 animate-fade-in">
+                <div className="relative">
+                  <img
+                    className="h-12 w-12 rounded-xl object-cover ring-2 ring-blue-500/30 shadow-lg"
+                    src="/MICRO FLUX LOGO.png"
+                    alt="Menu icon"
+                  />
+                  <div className="absolute -top-1 -right-1 h-4 w-4 bg-emerald-500 rounded-full border-2 border-slate-800 animate-pulse"></div>
+                </div>
+
+                <div>
+                  <span className="font-bold text-xl bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
+                    Enrollment
+                  </span>
+                  <p className="text-xs text-slate-400 font-medium">
+                    Management System v2.0
+                  </p>
+                </div>
               </div>
             </div>
           </div>

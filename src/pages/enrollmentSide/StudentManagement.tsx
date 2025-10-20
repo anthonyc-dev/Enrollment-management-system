@@ -30,21 +30,11 @@ import dayjs from "dayjs";
 import type { CreateStudentForm, Student } from "../../types/enrollment";
 import axiosInstance from "../../api/axios";
 import { AxiosError } from "axios";
+import { departments, programs, yearLevels } from "@/data/subData";
 
 const { Option } = Select;
 
 const API_BASE_URL = "/student-management";
-
-const departments = [
-  "CECS",
-  "Computer Science",
-  "Information Technology",
-  "Computer Engineering",
-  "Information Systems",
-  "Software Engineering",
-];
-
-const yearLevels = ["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year"];
 
 const genders = ["Male", "Female"];
 const statuses = ["Active", "Inactive", "Graduated", "Dropped"];
@@ -64,15 +54,6 @@ const StudentManagement: React.FC = () => {
   });
   const [form] = Form.useForm();
   const [loading, setLoading] = useState<boolean>(false);
-
-  const programs = [
-    "BS-Computer Science",
-    "BS-Information Technology",
-    "BS-Computer Engineering",
-    "BS-Information Systems",
-    "BS-Software Engineering",
-  ];
-
   // Fetch students from API
   const fetchStudents = async () => {
     try {

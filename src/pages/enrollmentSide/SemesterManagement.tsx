@@ -53,8 +53,6 @@ const SemesterManagement: React.FC = () => {
   const semesterTypes = [
     { value: "FIRST", label: "First Semester" },
     { value: "SECOND", label: "Second Semester" },
-    { value: "THIRD", label: "Third Semester" },
-    { value: "FOURTH", label: "Fourth Semester" },
     { value: "SUMMER", label: "Summer Semester" },
   ];
   const statuses: Semester["status"][] = ["inactive", "active", "completed"];
@@ -205,8 +203,12 @@ const SemesterManagement: React.FC = () => {
           semesterName: editingSemester.semesterName,
           academicYear: editingSemester.academicYear,
           semesterType: editingSemester.semesterType,
-          semesterDuration: parseSemesterDuration(editingSemester.semesterDuration || ""),
-          enrollmentPeriod: parseEnrollmentPeriod(editingSemester.enrollmentPeriod || ""),
+          semesterDuration: parseSemesterDuration(
+            editingSemester.semesterDuration || ""
+          ),
+          enrollmentPeriod: parseEnrollmentPeriod(
+            editingSemester.enrollmentPeriod || ""
+          ),
         });
       }, 0);
     }
@@ -217,8 +219,6 @@ const SemesterManagement: React.FC = () => {
     const typeMap = {
       FIRST: "1st Semester",
       SECOND: "2nd Semester",
-      THIRD: "3rd Semester",
-      FOURTH: "4th Semester",
       SUMMER: "Summer Semester",
     };
     return `${

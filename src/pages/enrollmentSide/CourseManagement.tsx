@@ -31,6 +31,12 @@ import type {
   CreateCourseForm,
   CreateSectionForm,
 } from "../../types/enrollment";
+import {
+  departments,
+  getClearingOfficersAsInstructors,
+  semesters,
+  type Instructor,
+} from "@/data/subData";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -56,71 +62,16 @@ const CourseManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"courses" | "sections">("courses");
   const [courseForm] = Form.useForm();
   const [sectionForm] = Form.useForm();
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
 
-  const departments = [
-    "Computer Science",
-    "Information Technology",
-    "Computer Engineering",
-    "Information Systems",
-    "Software Engineering",
-  ];
-
-  const semesters = [
-    {
-      id: "1",
-      semesterName: "1st Semester",
-    },
-    {
-      id: "2",
-      semesterName: "2nd Semester",
-    },
-    {
-      id: "3",
-      semesterName: "3rd Semester",
-    },
-    {
-      id: "4",
-      semesterName: "4th Semester",
-    },
-    {
-      id: "5",
-      semesterName: "Summer",
-    },
-  ];
-
-  const instructors = [
-    {
-      id: "1",
-      name: "John Doe",
-    },
-    {
-      id: "2",
-      name: "Jane Doe",
-    },
-    {
-      id: "3",
-      name: "John Smith",
-    },
-    {
-      id: "4",
-      name: "Jane Smith",
-    },
-    {
-      id: "5",
-      name: "John Doe",
-    },
-    {
-      id: "6",
-      name: "Jane Doe",
-    },
-  ];
   // Fetch data function
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [coursesData, sectionsData] = await Promise.all([
+      const [coursesData, sectionsData, instructorsData] = await Promise.all([
         courseService.getAllCourses(),
         sectionService.getAllSections(),
+        getClearingOfficersAsInstructors(),
       ]);
 
       // console.log(
@@ -273,6 +224,7 @@ const CourseManagement: React.FC = () => {
       });
 
       setSections(sectionsWithDefaults as unknown as Section[]);
+      setInstructors(instructorsData || []);
     } catch (error) {
       console.error("Error fetching data:", error);
       message.error("Failed to load courses and sections");
