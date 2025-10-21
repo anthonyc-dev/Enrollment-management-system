@@ -924,24 +924,24 @@ const StudentEnrollmentComponent: React.FC = () => {
 
         // Try multiple possible field names for courses
         const recordAny = record as unknown as Record<string, unknown>;
-        let courses =
+        let courseCodes =
           record.selectedCourses ||
           recordAny.courses ||
           record.courseCode ||
           [];
 
         // Handle different data formats
-        if (typeof courses === "string") {
+        if (typeof courseCodes === "string") {
           // If it's a single course code/name string
-          courses = [courses];
-        } else if (!Array.isArray(courses)) {
+          courseCodes = [courseCodes];
+        } else if (!Array.isArray(courseCodes)) {
           // If it's not an array, try to convert or fallback
-          courses = [];
+          courseCodes = [];
         }
 
-        console.log("Processed courses array:", courses);
+        console.log("Processed courses array:", courseCodes);
 
-        if (courses.length === 0) {
+        if (courseCodes.length === 0) {
           // Check if we have individual course fields as fallback
           if (record.courseCode) {
             return (
@@ -953,35 +953,42 @@ const StudentEnrollmentComponent: React.FC = () => {
           return <Tag color="default">No courses</Tag>;
         }
 
-        // Show only first 3 courses and "+X more" if there are additional courses
-        const displayCourses = courses.slice(0, 3);
-        const remainingCount = Math.max(0, courses.length - 3);
-
+        // Show all courses with same logic as prerequisites
         return (
-          <div className="max-w-xs">
-            {displayCourses.map((course, index) => {
-              // Extract only course code from different formats
+          <Space wrap>
+            {courseCodes.map((courseItem, index) => {
+              // Extract course code from different formats
               let courseCode = "";
-              if (typeof course === "string") {
+              if (typeof courseItem === "string") {
                 // Extract course code from formats like "CS201 - Data Structures (3 units)"
-                const codeMatch = course.match(/^([A-Z]{2,4}\d{2,3})/);
+                const codeMatch = courseItem.match(/^([A-Z]{2,4}\d{2,3})/);
                 courseCode = codeMatch
                   ? codeMatch[1]
-                  : course.split(" - ")[0] || course;
+                  : courseItem.split(" - ")[0] || courseItem;
               }
 
+              // Find matching course in courses array for tooltip
+              const match = (courses || []).find(
+                (c) => c.courseCode === courseCode || c.id === courseCode
+              );
+              const label = match?.courseCode || courseCode;
+
               return (
-                <Tag key={index} color="purple" className="mb-1 text-xs mr-1">
-                  {courseCode}
+                <Tag
+                  key={index}
+                  color="purple"
+                  className="text-xs"
+                  title={
+                    match
+                      ? `${match.courseCode} - ${match.courseName}`
+                      : courseCode
+                  }
+                >
+                  {label}
                 </Tag>
               );
             })}
-            {courses.length > 3 && remainingCount > 0 && (
-              <Tag color="blue" className="mb-1 text-xs">
-                +{remainingCount} more
-              </Tag>
-            )}
-          </div>
+          </Space>
         );
       },
     },
@@ -1646,7 +1653,7 @@ const StudentEnrollmentComponent: React.FC = () => {
                 <div>
                   <p className="text-sm text-gray-500">Student Number</p>
                   <p className="font-medium">
-                    {viewingStudentEnrollment.studentNumber || "N/A"}
+                    {viewingStudentEnrollment.schoolId || "N/A"}
                   </p>
                 </div>
                 <div>

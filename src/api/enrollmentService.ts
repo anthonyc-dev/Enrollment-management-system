@@ -409,7 +409,7 @@ export const enrollmentService = {
         instructor: enrollmentData.instructor || "",
 
         // Academic Information
-        semester: `${enrollmentData.semester} AY ${enrollmentData.academicYear}`,
+        semester: `${enrollmentData.semester}`,
         yearLevel: enrollmentData.yearLevel,
         status: "Enrolled",
 
@@ -488,7 +488,7 @@ export const enrollmentService = {
       if (totalUnits !== undefined) payload.totalUnits = totalUnits;
 
       const response = await axios.put(
-        `${ENROLLMENT_BASE_URL}/updateStudentEnrollment/${id}`,
+        `${ENROLLMENT_BASE_URL}/updateEnrollment/${id}`,
         payload
       );
 
@@ -505,9 +505,7 @@ export const enrollmentService = {
   // Delete student enrollment
   deleteStudentEnrollment: async (id: string): Promise<void> => {
     try {
-      await axios.delete(
-        `${ENROLLMENT_BASE_URL}/deleteStudentEnrollment/${id}`
-      );
+      await axios.delete(`${ENROLLMENT_BASE_URL}/deleteEnrollment/${id}`);
     } catch (error: unknown) {
       console.error("Error deleting student enrollment:", error);
       if (error instanceof AxiosError && error.response) {
