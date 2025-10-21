@@ -27,6 +27,8 @@ import {
   EyeOutlined,
   EditOutlined,
   DeleteOutlined,
+  HomeOutlined,
+  ClockCircleOutlined,
 } from "@ant-design/icons";
 import { type ColumnsType } from "antd/es/table";
 import type {
@@ -38,7 +40,6 @@ import type {
 } from "../../types/enrollment";
 import { enrollmentService } from "../../api/enrollmentService";
 import { AxiosError } from "axios";
-import { courseService } from "../../api/courseService";
 
 const { Step } = Steps;
 
@@ -106,21 +107,57 @@ const StudentEnrollmentComponent: React.FC = () => {
 
   // Edit form state
   const [editFormData, setEditFormData] = useState<{
-    name: string;
+    firstName: string;
+    lastName: string;
     studentNumber: string;
     department: string;
     yearLevel: string;
     semester: string;
     academicYear: string;
     selectedCourses: string[];
+    // Additional StudentEnrollment properties
+    schedule?: {
+      day:
+        | "Monday"
+        | "Tuesday"
+        | "Wednesday"
+        | "Thursday"
+        | "Friday"
+        | "Saturday"
+        | "Sunday";
+      startTime: string;
+      endTime: string;
+      room?: string;
+    }[];
+    timeStart?: string;
+    timeEnd?: string;
+    room?: string;
+    instructor?: string;
+    courseCode?: string;
+    courseName?: string;
+    day?: string;
+    units?: number;
+    totalUnits?: number;
   }>({
-    name: "",
+    firstName: "",
+    lastName: "",
     studentNumber: "",
     department: "",
     yearLevel: "1st Year",
     semester: "",
     academicYear: "",
     selectedCourses: [],
+    // Initialize additional properties
+    schedule: [],
+    timeStart: "",
+    timeEnd: "",
+    room: "",
+    instructor: "",
+    courseCode: "",
+    courseName: "",
+    day: "",
+    units: 0,
+    totalUnits: 0,
   });
 
   // Edit modal course selection states
@@ -159,8 +196,25 @@ const StudentEnrollmentComponent: React.FC = () => {
   const fetchStudentEnrollments = async () => {
     try {
       setStudentEnrollmentsLoading(true);
+      console.log("Fetching student enrollments...");
       const data = await enrollmentService.getAllStudentEnrollments();
-      // console.log("Fetched student enrollments:", data);
+      console.log("Fetched student enrollments:", data);
+      console.log("Number of enrollments found:", data?.length || 0);
+
+      // Debug: Log the structure of the first enrollment to understand data format
+      if (data && data.length > 0) {
+        console.log("First enrollment structure:", data[0]);
+        console.log(
+          "Selected courses in first enrollment:",
+          data[0].selectedCourses
+        );
+        console.log("Type of selectedCourses:", typeof data[0].selectedCourses);
+        console.log(
+          "Is selectedCourses an array:",
+          Array.isArray(data[0].selectedCourses)
+        );
+      }
+
       setStudentEnrollments(data || []);
     } catch (error) {
       console.error("Error fetching student enrollments:", error);
@@ -205,8 +259,8 @@ const StudentEnrollmentComponent: React.FC = () => {
   const fetchCourses = async () => {
     try {
       setCoursesLoading(true);
-      const data = await courseService.getAllCourses();
-      // console.log("Fetched courses:", data);
+      const data = await enrollmentService.getCourses();
+      console.log("Fetched courses:", data);
       setCourses(data || []);
     } catch (error) {
       console.error("Error fetching courses:", error);
@@ -252,32 +306,6 @@ const StudentEnrollmentComponent: React.FC = () => {
     return matchesSearch && matchesDepartment && matchesYearLevel;
   });
 
-  // Get sections for selected semester
-  // const availableSections = (sections || []).filter(
-  //   (section) =>
-  //     section.semesterId === selectedSemester &&
-  //     section.status === "Open" &&
-  //     section.currentEnrollment < section.maxCapacity
-  // );
-
-  // Fallback: if no available sections, show existing dummy sections
-  // const fallbackSections = selectedSemester
-  //   ? (sections || []).filter(
-  //       (section) => section.semesterId === selectedSemester
-  //     )
-  //   : sections || [];
-  // const displayedSections =
-  //   availableSections.length > 0 ? availableSections : fallbackSections;
-
-  // Derived filters for Select Courses step
-  // const uniqueDays = Array.from(
-  //   new Set(
-  //     (sections || [])
-  //       .filter((s) => s?.schedule && Array.isArray(s.schedule))
-  //       .flatMap((s) => s.schedule.map((sched) => sched?.day).filter(Boolean))
-  //   )
-  // );
-
   const uniqueCourseDepartments = Array.from(
     new Set(
       (courses || []).filter((c) => c?.department).map((c) => c.department)
@@ -306,69 +334,6 @@ const StudentEnrollmentComponent: React.FC = () => {
         return undefined;
     }
   };
-
-  // Course filters remain empty by default - no auto-population from selected student
-
-  // const filteredDisplayedSections = displayedSections.filter((section) => {
-  //   // Ensure section has required properties
-  //   if (!section || !section.course) {
-  //     return false;
-  //   }
-
-  //   const matchesText =
-  //     !courseQuery ||
-  //     section.sectionCode?.toLowerCase().includes(courseQuery.toLowerCase()) ||
-  //     section.sectionName?.toLowerCase().includes(courseQuery.toLowerCase()) ||
-  //     section.course.courseCode
-  //       ?.toLowerCase()
-  //       .includes(courseQuery.toLowerCase()) ||
-  //     section.course.courseName
-  //       ?.toLowerCase()
-  //       .includes(courseQuery.toLowerCase());
-
-  //   const matchesDay =
-  //     !dayFilter ||
-  //     (section.schedule &&
-  //       Array.isArray(section.schedule) &&
-  //       section.schedule.some((sched) => sched?.day === dayFilter));
-
-  //   const matchesAvailability =
-  //     availabilityFilter === "all"
-  //       ? true
-  //       : availabilityFilter === "open"
-  //       ? section.status === "Open" &&
-  //         section.currentEnrollment < section.maxCapacity
-  //       : availabilityFilter === "full"
-  //       ? section.currentEnrollment >= section.maxCapacity ||
-  //         section.status !== "Open"
-  //       : true;
-
-  //   const matchesDepartmentFilter =
-  //     !courseDepartmentFilter ||
-  //     section.course?.department === courseDepartmentFilter;
-
-  //   const courseYearLevel = section.course?.courseCode
-  //     ? mapCourseCodeToYearLevel(section.course.courseCode)
-  //     : undefined;
-  //   const matchesYearLevelFilter =
-  //     !courseYearLevelFilter || courseYearLevelFilter === courseYearLevel;
-
-  //   return (
-  //     matchesText &&
-  //     matchesDay &&
-  //     matchesAvailability &&
-  //     matchesDepartmentFilter &&
-  //     matchesYearLevelFilter
-  //   );
-  // });
-
-  // // Get enrolled sections for selected student and semester
-  // const enrolledSections = enrollments.filter(
-  //   (enrollment) =>
-  //     enrollment.studentId === selectedStudent?.id &&
-  //     enrollment.semesterId === selectedSemester &&
-  //     enrollment.status === "Enrolled"
-  // );
 
   // Filter courses based on search and department filters
   const filteredCourses = courses.filter((course) => {
@@ -424,13 +389,21 @@ const StudentEnrollmentComponent: React.FC = () => {
 
   // Filtering for Current Student Enrollments table
   const filteredStudentEnrollments = studentEnrollments.filter((record) => {
+    // Debug each record being filtered
+    console.log("Filtering record:", record);
+
     const matchesSearch =
       !enrollmentSearchText ||
-      record.name?.toLowerCase().includes(enrollmentSearchText.toLowerCase()) ||
+      record.firstName
+        ?.toLowerCase()
+        .includes(enrollmentSearchText.toLowerCase()) ||
+      record.lastName
+        ?.toLowerCase()
+        .includes(enrollmentSearchText.toLowerCase()) ||
       record.studentNumber
         ?.toLowerCase()
         .includes(enrollmentSearchText.toLowerCase()) ||
-      record.selectedCourses.some((course) =>
+      record.selectedCourses?.some((course) =>
         course.toLowerCase().includes(enrollmentSearchText.toLowerCase())
       );
 
@@ -442,8 +415,17 @@ const StudentEnrollmentComponent: React.FC = () => {
       !enrollmentYearLevelFilter ||
       record.yearLevel === enrollmentYearLevelFilter;
 
-    return matchesSearch && matchesDepartment && matchesYearLevel;
+    const passes = matchesSearch && matchesDepartment && matchesYearLevel;
+    console.log("Record passes filter:", passes, {
+      matchesSearch,
+      matchesDepartment,
+      matchesYearLevel,
+    });
+
+    return passes;
   });
+
+  console.log("Final filtered enrollments:", filteredStudentEnrollments);
 
   const handleCourseToggle = (course: Course) => {
     const courseString = `${course.courseCode} - ${course.courseName} (${course.units} units)`;
@@ -479,27 +461,108 @@ const StudentEnrollmentComponent: React.FC = () => {
   };
 
   const handleEnrollStudent = async () => {
+    // Validate prerequisites
     if (!selectedStudent || !selectedSemester || selectedCourses.length === 0) {
-      message.error("Please complete all required selections");
+      message.error("Please complete all enrollment steps before submitting.");
       return;
     }
 
     setCreateLoading(true);
     try {
+      console.log(
+        `Creating enrollment for ${selectedCourses.length} courses:`,
+        selectedCourses
+      );
+
+      // Validate student information
+      if (
+        !selectedStudent.firstName ||
+        !selectedStudent.lastName ||
+        !selectedStudent.department
+      ) {
+        message.error(
+          "Student information is incomplete. Please ensure student has firstName, lastName, and department."
+        );
+        return;
+      }
+
+      // Calculate total units from all selected courses
+      const totalUnits = selectedCourses.reduce((total, courseString) => {
+        const unitsMatch = courseString.match(/\((\d+)\s+units?\)/);
+        return total + (unitsMatch ? parseInt(unitsMatch[1], 10) : 0);
+      }, 0);
+
+      // Find course details from courses array for schedule information (use first course as default)
+      let courseDetails = null;
+      if (selectedCourses.length > 0) {
+        const firstCourse = selectedCourses[0];
+        const courseMatch = firstCourse.match(
+          /^([A-Z0-9]+)\s*-\s*([^(]+?)\s*\((\d+)\s+units?\)/i
+        );
+        if (courseMatch) {
+          const firstCourseCode = courseMatch[1].trim();
+          courseDetails = courses.find(
+            (course) => course.courseCode === firstCourseCode
+          );
+        }
+      }
+
       const enrollmentData: CreateStudentEnrollmentForm = {
-        name: `${selectedStudent.firstName} ${selectedStudent.lastName}`,
-        studentNumber: selectedStudent.schoolId,
+        // Required student information
+        schoolId:
+          selectedStudent.schoolId ||
+          selectedStudent.studentNumber ||
+          `S2025-${Date.now().toString().slice(-3)}`,
+        firstName: selectedStudent.firstName,
+        lastName: selectedStudent.lastName,
+        middleName: selectedStudent.middleName || "",
+        studentNumber:
+          selectedStudent.studentNumber || selectedStudent.schoolId,
+
+        // Department information
         department: selectedStudent.department,
+
+        // Academic information
         yearLevel: selectedStudent.yearLevel,
         semester: selectedSemester.semesterName,
         academicYear: selectedSemester.academicYear,
-        selectedCourses: selectedCourses,
+
+        // All selected courses - will be stored as course codes in prerequisites array
+        selectedCourses: Array.isArray(selectedCourses) ? selectedCourses : [],
+        totalUnits: totalUnits,
+
+        // Schedule information (from course details if available)
+        day: courseDetails?.day || "Monday",
+        timeStart: courseDetails?.timeStart || "08:00 AM",
+        timeEnd: courseDetails?.timeEnd || "10:00 AM",
+        room: courseDetails?.room || "TBA",
+        instructor: courseDetails?.instructor || "TBA",
+
+        // Additional fields
+        description:
+          courseDetails?.description ||
+          `Multiple course enrollment for ${selectedCourses.length} courses`,
+        prerequisites: [], // Will be populated by API service with selected course codes
+        maxCapacity: courseDetails?.maxCapacity || 30,
+        status: "Enrolled",
+        createdAt: new Date().toISOString(),
+
+        // These fields will be populated per course by the API service
+        courseCode: "", // Will be set per course
+        courseName: "", // Will be set per course
+        units: 0, // Will be set per course
       };
 
+      console.log("Enrollment data being sent:", enrollmentData);
+      console.log(
+        `This will create 1 enrollment record with ${selectedCourses.length} courses stored in prerequisites array`
+      );
+
+      // Create single student enrollment with all courses stored in prerequisites array
       await enrollmentService.createStudentEnrollment(enrollmentData);
 
       message.success(
-        `Successfully enrolled ${selectedStudent.firstName} ${selectedStudent.lastName} in ${selectedCourses.length} course(s)`
+        `Successfully enrolled ${selectedStudent.firstName} ${selectedStudent.lastName} in ${selectedCourses.length} course(s) (${totalUnits} total units). 1 enrollment record created with courses stored in prerequisites array.`
       );
 
       // Refresh student enrollments data
@@ -513,7 +576,41 @@ const StudentEnrollmentComponent: React.FC = () => {
       setIsModalOpen(false);
     } catch (error) {
       console.error("Error creating student enrollment:", error);
-      message.error("Failed to create enrollment. Please try again.");
+
+      // Provide more specific error messages based on the error type
+      let errorMessage = "Failed to create enrollment. Please try again.";
+
+      if (error instanceof Error) {
+        // Handle validation errors from our own checks
+        if (error.message.includes("Missing required fields")) {
+          errorMessage = `Validation Error: ${error.message}`;
+        } else if (error.message.includes("Invalid course format")) {
+          errorMessage = `Course Format Error: ${error.message}`;
+        } else {
+          errorMessage = error.message;
+        }
+      } else if (error instanceof AxiosError) {
+        if (error.response?.status === 404) {
+          errorMessage =
+            "API endpoint not found. Please check if the backend server is running and the endpoint exists.";
+        } else if (error.response?.status === 400) {
+          // Extract specific error message from server response
+          const serverMessage = error.response?.data?.message;
+          if (serverMessage) {
+            errorMessage = `Bad Request: ${serverMessage}`;
+          } else {
+            errorMessage =
+              "Invalid data format. Please check all required fields are filled.";
+          }
+        } else if (error.response?.status === 500) {
+          errorMessage =
+            "Server error occurred. Please check the backend server logs.";
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+      }
+
+      message.error(errorMessage);
     } finally {
       setCreateLoading(false);
     }
@@ -582,6 +679,7 @@ const StudentEnrollmentComponent: React.FC = () => {
       async onOk() {
         setDeleteLoading(true);
         try {
+          // Delete student enrollment using proper API service
           await enrollmentService.deleteStudentEnrollment(enrollmentId);
           message.success("Enrollment removed successfully");
 
@@ -754,9 +852,11 @@ const StudentEnrollmentComponent: React.FC = () => {
         <Space>
           <UserOutlined className="text-blue-500" />
           <div>
-            <div className="font-medium">{record.name}</div>
+            <div className="font-medium">
+              {record.firstName} {record.lastName}
+            </div>
             <div className="text-sm text-gray-500">
-              {record.studentNumber || "N/A"}
+              {record.schoolId || "N/A"}
             </div>
           </div>
         </Space>
@@ -778,40 +878,161 @@ const StudentEnrollmentComponent: React.FC = () => {
       title: "Semester",
       key: "semester",
       render: (_, record) => (
-        <div>
-          <div className="font-medium">{record.semester}</div>
-          <div className="text-sm text-gray-500">{record.academicYear}</div>
-        </div>
+        <Space>
+          <div>
+            <div className="font-medium">{record.semester}</div>
+            <div className="text-sm text-gray-500">{record.academicYear}</div>
+          </div>
+        </Space>
+      ),
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (status: string) => (
+        <Tag color={status === "Enrolled" ? "green" : "orange"}>{status}</Tag>
+      ),
+    },
+    {
+      title: "Schedule",
+      key: "schedule",
+      render: (_, record) => (
+        <Space direction="vertical" size="small">
+          <div className="flex items-center gap-2">
+            <CalendarOutlined className="text-indigo-500" />
+            <span className="font-medium">{record.day}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <ClockCircleOutlined className="text-gray-400" />
+            <span>
+              {record.timeStart} - {record.timeEnd}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <HomeOutlined className="text-gray-400" />
+            <span>{record.room}</span>
+          </div>
+        </Space>
       ),
     },
     {
       title: "Courses",
       key: "courses",
-      render: (_, record) => (
-        <div className="max-w-xs">
-          {record.selectedCourses.slice(0, 2).map((course, index) => (
-            <Tag key={index} color="purple" className="mb-1 text-xs">
-              {course.split(" - ")[0]}
-            </Tag>
-          ))}
-          {record.selectedCourses.length > 2 && (
-            <Tag color="default" className="text-xs">
-              +{record.selectedCourses.length - 2} more
-            </Tag>
-          )}
-        </div>
-      ),
+      render: (_, record) => {
+        console.log("Rendering courses for record:", record.id, record);
+
+        // Try multiple possible field names for courses
+        const recordAny = record as unknown as Record<string, unknown>;
+        let courses =
+          record.selectedCourses ||
+          recordAny.courses ||
+          record.courseCode ||
+          [];
+
+        // Handle different data formats
+        if (typeof courses === "string") {
+          // If it's a single course code/name string
+          courses = [courses];
+        } else if (!Array.isArray(courses)) {
+          // If it's not an array, try to convert or fallback
+          courses = [];
+        }
+
+        console.log("Processed courses array:", courses);
+
+        if (courses.length === 0) {
+          // Check if we have individual course fields as fallback
+          if (record.courseCode) {
+            return (
+              <Tag color="purple" className="text-xs">
+                {record.courseCode}
+              </Tag>
+            );
+          }
+          return <Tag color="default">No courses</Tag>;
+        }
+
+        // Show only first 3 courses and "+X more" if there are additional courses
+        const displayCourses = courses.slice(0, 3);
+        const remainingCount = Math.max(0, courses.length - 3);
+
+        return (
+          <div className="max-w-xs">
+            {displayCourses.map((course, index) => {
+              // Extract only course code from different formats
+              let courseCode = "";
+              if (typeof course === "string") {
+                // Extract course code from formats like "CS201 - Data Structures (3 units)"
+                const codeMatch = course.match(/^([A-Z]{2,4}\d{2,3})/);
+                courseCode = codeMatch
+                  ? codeMatch[1]
+                  : course.split(" - ")[0] || course;
+              }
+
+              return (
+                <Tag key={index} color="purple" className="mb-1 text-xs mr-1">
+                  {courseCode}
+                </Tag>
+              );
+            })}
+            {courses.length > 3 && remainingCount > 0 && (
+              <Tag color="blue" className="mb-1 text-xs">
+                +{remainingCount} more
+              </Tag>
+            )}
+          </div>
+        );
+      },
     },
     {
       title: "Total Units",
-      dataIndex: "totalUnits",
       key: "totalUnits",
       align: "center" as const,
-      render: (units: number) => (
-        <Tag color="orange" className="font-medium">
-          {units} units
-        </Tag>
-      ),
+      render: (_, record) => {
+        console.log(
+          "Rendering total units for record:",
+          record.id,
+          "totalUnits:",
+          record.totalUnits
+        );
+
+        // Try to get total units from different possible sources
+        let totalUnits = record.totalUnits;
+
+        // If totalUnits is missing or 0, try to calculate from selectedCourses
+        if (!totalUnits || totalUnits === 0) {
+          const recordAny = record as unknown as Record<string, unknown>;
+          const courses = record.selectedCourses || recordAny.courses || [];
+
+          if (Array.isArray(courses) && courses.length > 0) {
+            totalUnits = courses.reduce((total, courseString) => {
+              if (typeof courseString === "string") {
+                // Extract units from course string format: "CS201 - Data Structures and Algorithms (3 units)"
+                const unitsMatch = courseString.match(/\((\d+)\s+units?\)/);
+                return total + (unitsMatch ? parseInt(unitsMatch[1], 10) : 0);
+              }
+              return total;
+            }, 0);
+          }
+        }
+
+        // Fallback to individual units field if available
+        if (!totalUnits || totalUnits === 0) {
+          totalUnits = record.units || 0;
+        }
+
+        console.log("Final calculated total units:", totalUnits);
+
+        return (
+          <Tag
+            color={totalUnits > 0 ? "orange" : "default"}
+            className="font-medium"
+          >
+            {totalUnits || 0} units
+          </Tag>
+        );
+      },
     },
     {
       title: "Created Date",
@@ -842,13 +1063,24 @@ const StudentEnrollmentComponent: React.FC = () => {
             onClick={() => {
               setEditingStudentEnrollment(record);
               setEditFormData({
-                name: record.name,
-                studentNumber: record.studentNumber || "",
+                firstName: record.firstName,
+                lastName: record.lastName,
+                studentNumber: record.schoolId || "",
                 department: record.department,
                 yearLevel: record.yearLevel,
                 semester: record.semester,
                 academicYear: record.academicYear,
                 selectedCourses: [...record.selectedCourses],
+                schedule: record.schedule,
+                timeStart: record.timeStart,
+                timeEnd: record.timeEnd,
+                room: record.room,
+                totalUnits: record.totalUnits,
+                instructor: record.instructor,
+                courseCode: record.courseCode,
+                courseName: record.courseName,
+                day: record.day,
+                units: record.units,
               });
               setIsEditModalOpen(true);
             }}
@@ -905,7 +1137,8 @@ const StudentEnrollmentComponent: React.FC = () => {
             Student Enrollment
           </h1>
           <p className="text-gray-500 mt-2">
-            Enroll students in courses for the current semester
+            Manage student enrollments - Add, update, and delete student course
+            enrollments
           </p>
         </div>
         <div className="flex gap-2">
@@ -924,6 +1157,22 @@ const StudentEnrollmentComponent: React.FC = () => {
           >
             Refresh
           </Button>
+          <Button
+            type="dashed"
+            onClick={() => {
+              console.log("=== API ENDPOINTS USED ===");
+              console.log("CREATE: POST /courses/createCourse");
+              console.log("READ: GET /courses/getAllCourses");
+              console.log("UPDATE: PUT /courses/updateCourse/[id]");
+              console.log("DELETE: DELETE /courses/deleteCourse/[id]");
+              console.log("=========================");
+              message.info(
+                "API endpoints logged to console - Check browser dev tools"
+              );
+            }}
+          >
+            Show API Info
+          </Button>
         </div>
       </div>
 
@@ -941,7 +1190,66 @@ const StudentEnrollmentComponent: React.FC = () => {
       )}
 
       {/* Current Enrollments */}
-      <Card title="Current Enrollments" className="mb-6">
+      <Card
+        title={
+          <div className="flex items-center justify-between">
+            <span>Student Enrollments</span>
+            <div className="flex gap-2">
+              <Tag color="blue">Total: {studentEnrollments.length}</Tag>
+              <Tag color="green">
+                Total Units:{" "}
+                {studentEnrollments.reduce(
+                  (total, enrollment) => total + enrollment.totalUnits,
+                  0
+                )}
+              </Tag>
+              <Button
+                size="small"
+                icon={<ReloadOutlined />}
+                onClick={fetchStudentEnrollments}
+                loading={studentEnrollmentsLoading}
+                type="dashed"
+              >
+                Refresh Enrollments
+              </Button>
+              <Button
+                size="small"
+                onClick={() => {
+                  console.log("=== DEBUG INFO ===");
+                  console.log("studentEnrollments state:", studentEnrollments);
+                  console.log(
+                    "filteredStudentEnrollments:",
+                    filteredStudentEnrollments
+                  );
+                  console.log(
+                    "studentEnrollments.length:",
+                    studentEnrollments.length
+                  );
+                  console.log(
+                    "filteredStudentEnrollments.length:",
+                    filteredStudentEnrollments.length
+                  );
+                  console.log("enrollmentSearchText:", enrollmentSearchText);
+                  console.log(
+                    "enrollmentDepartmentFilter:",
+                    enrollmentDepartmentFilter
+                  );
+                  console.log(
+                    "enrollmentYearLevelFilter:",
+                    enrollmentYearLevelFilter
+                  );
+                  console.log("==================");
+                  message.info("Debug info logged to console");
+                }}
+                type="text"
+              >
+                Debug Table
+              </Button>
+            </div>
+          </div>
+        }
+        className="mb-6"
+      >
         <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
           <Input
             placeholder="Search by name, number, course..."
@@ -984,6 +1292,16 @@ const StudentEnrollmentComponent: React.FC = () => {
                 `${range[0]}-${range[1]} of ${total} enrollments`,
             }}
             scroll={{ x: "max-content" }}
+            locale={{
+              emptyText:
+                studentEnrollments.length === 0
+                  ? "No enrollment records found. Try creating an enrollment first, then click 'Refresh Enrollments'."
+                  : "No records match your search criteria.",
+            }}
+            onRow={(record) => {
+              console.log("Table row data:", record);
+              return {};
+            }}
           />
         </Spin>
       </Card>
@@ -1320,7 +1638,10 @@ const StudentEnrollmentComponent: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-500">Name</p>
-                  <p className="font-medium">{viewingStudentEnrollment.name}</p>
+                  <p className="font-medium">
+                    {viewingStudentEnrollment.firstName}{" "}
+                    {viewingStudentEnrollment.lastName}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Student Number</p>
@@ -1443,12 +1764,23 @@ const StudentEnrollmentComponent: React.FC = () => {
               selectedCourses: editFormData.selectedCourses,
             };
 
+            // Update student enrollment using proper API service
             await enrollmentService.updateStudentEnrollment(
               editingStudentEnrollment.id,
               updateData
             );
 
-            message.success("Student courses updated successfully");
+            const totalUnits = editFormData.selectedCourses.reduce(
+              (total, courseString) => {
+                const unitsMatch = courseString.match(/\((\d+)\s+units?\)/);
+                return total + (unitsMatch ? parseInt(unitsMatch[1], 10) : 0);
+              },
+              0
+            );
+
+            message.success(
+              `Student courses updated successfully - ${editFormData.selectedCourses.length} course(s) (${totalUnits} total units)`
+            );
             await fetchStudentEnrollments();
             setIsEditModalOpen(false);
             setEditingStudentEnrollment(null);
@@ -1489,7 +1821,7 @@ const StudentEnrollmentComponent: React.FC = () => {
                 Student Name (Read-only)
               </label>
               <Input
-                value={editFormData.name}
+                value={`${editFormData.firstName} ${editFormData.lastName}`}
                 disabled
                 placeholder="Enter student name"
               />

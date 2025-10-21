@@ -130,7 +130,7 @@ const EnrollmentDashboard: React.FC = () => {
     ).length;
 
     // Get unique students from enrollments
-    const uniqueStudents = new Set(enrollmentsData.map((e) => e.name)).size;
+    const uniqueStudents = new Set(enrollmentsData.map((e) => `${e.firstName} ${e.lastName}`)).size;
 
     setStats({
       totalStudents: uniqueStudents || studentsData.length,
@@ -157,7 +157,7 @@ const EnrollmentDashboard: React.FC = () => {
         <Space>
           <UserOutlined className="text-blue-500" />
           <div>
-            <div className="font-medium">{record.name}</div>
+            <div className="font-medium">{record.firstName} {record.lastName}</div>
             <div className="text-sm text-gray-500">
               {record.studentNumber || "N/A"}
             </div>

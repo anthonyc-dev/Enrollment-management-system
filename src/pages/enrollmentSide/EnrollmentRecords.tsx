@@ -77,8 +77,8 @@ const EnrollmentRecords: React.FC = () => {
         const student = {
           id: studentEnrollment.id,
           studentNumber: studentEnrollment.studentNumber || "",
-          firstName: studentEnrollment.name.split(" ")[0] || "",
-          lastName: studentEnrollment.name.split(" ").slice(1).join(" ") || "",
+          firstName: studentEnrollment.firstName || "",
+          lastName: studentEnrollment.lastName || "",
           email: `${studentEnrollment.studentNumber}@student.edu`,
           department: studentEnrollment.department,
           yearLevel: studentEnrollment.yearLevel as

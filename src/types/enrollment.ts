@@ -28,6 +28,17 @@ export interface Course {
   units: number;
   department: string;
   prerequisites?: string[];
+
+  // Section-specific fields
+  maxCapacity?: number;
+  day?: string;
+  timeStart?: string; // e.g. "08:00 AM"
+  timeEnd?: string; // e.g. "10:00 AM"
+  room?: string;
+  instructor?: string;
+  semester?: string;
+  yearLevel?: string;
+
   status?: "Active" | "Inactive";
   dateCreated: string;
   dateUpdated: string;
@@ -165,6 +176,16 @@ export interface CreateCourseForm {
   units: number;
   department: string;
   prerequisites?: string[];
+
+  // Section-specific fields
+  maxCapacity?: number;
+  day?: string;
+  timeStart?: string; // e.g. "08:00 AM"
+  timeEnd?: string; // e.g. "10:00 AM"
+  room?: string;
+  instructor?: string;
+  semester?: string;
+  yearLevel?: string;
 }
 
 export interface CreateSectionForm {
@@ -236,30 +257,77 @@ export interface EnrollmentFilters {
 // Student Enrollment Interface (matches API data structure)
 export interface StudentEnrollment {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  email: string;
+  courseCode: string;
+  courseName: string;
   studentNumber?: string;
+  schoolId?: string;
   department: string;
   yearLevel: string;
   semester: string;
   academicYear: string;
   selectedCourses: string[];
   totalUnits: number;
+  status?: string;
+
+  instructor: string;
+  day: string;
+  timeStart: string;
+  timeEnd: string;
+  room: string;
+  units: number;
+  schedule: {
+    day:
+      | "Monday"
+      | "Tuesday"
+      | "Wednesday"
+      | "Thursday"
+      | "Friday"
+      | "Saturday"
+      | "Sunday";
+    startTime: string;
+    endTime: string;
+    room?: string;
+  }[];
+
   createdAt: string;
 }
 
 // Form types for StudentEnrollment
 export interface CreateStudentEnrollmentForm {
-  name: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
   studentNumber?: string;
+  schoolId?: string;
   department: string;
   yearLevel: string;
   semester: string;
   academicYear: string;
   selectedCourses: string[];
+  prerequisites?: string[];
+  maxCapacity?: number;
+  units?: number;
+
+  description?: string;
+  totalUnits: number;
+  courseCode: string;
+  courseName: string;
+  day: string;
+  timeStart: string;
+  timeEnd: string;
+  room: string;
+  instructor: string;
+  status: string;
+  createdAt: string;
 }
 
 export interface UpdateStudentEnrollmentForm {
-  name?: string;
+  firstName?: string;
+  lastName?: string;
   studentNumber?: string;
   department?: string;
   yearLevel?: string;
