@@ -922,7 +922,7 @@ const StudentEnrollmentComponent: React.FC = () => {
       render: (_, record) => {
         console.log("Rendering courses for record:", record.id, record);
 
-        // Try multiple possible field names for courses
+        // Normalize record fields
         const recordAny = record as unknown as Record<string, unknown>;
         let courseCodes =
           record.selectedCourses ||
@@ -930,19 +930,17 @@ const StudentEnrollmentComponent: React.FC = () => {
           record.courseCode ||
           [];
 
-        // Handle different data formats
+        // Normalize courseCodes into an array
         if (typeof courseCodes === "string") {
-          // If it's a single course code/name string
           courseCodes = [courseCodes];
         } else if (!Array.isArray(courseCodes)) {
-          // If it's not an array, try to convert or fallback
           courseCodes = [];
         }
 
         console.log("Processed courses array:", courseCodes);
 
         if (courseCodes.length === 0) {
-          // Check if we have individual course fields as fallback
+          // Fallback: single course field
           if (record.courseCode) {
             return (
               <Tag color="purple" className="text-xs">
@@ -953,45 +951,54 @@ const StudentEnrollmentComponent: React.FC = () => {
           return <Tag color="default">No courses</Tag>;
         }
 
-        // Show all courses with same logic as prerequisites
+        // ✅ Regex that supports flexible course codes:
+        // Examples: GEC 7, CC102, CC 109, MS102, MS 120, IT301A
+        const COURSE_CODE_REGEX = /^([A-Z]{2,5}\s*\d{1,3}[A-Z0-9]*)/i;
+
         return (
-          <Space wrap>
-            {courseCodes.map((courseItem, index) => {
-              // Extract course code from different formats
-              let courseCode = "";
-              if (typeof courseItem === "string") {
-                // Extract course code from formats like "CS201 - Data Structures (3 units)"
-                const codeMatch = courseItem.match(/^([A-Z]{2,4}\d{2,3})/);
-                courseCode = codeMatch
-                  ? codeMatch[1]
-                  : courseItem.split(" - ")[0] || courseItem;
-              }
+          <div style={{ maxHeight: 100, overflowY: "auto" }}>
+            <Space wrap>
+              {courseCodes.map((courseItem, index) => {
+                let courseCode = "";
 
-              // Find matching course in courses array for tooltip
-              const match = (courses || []).find(
-                (c) => c.courseCode === courseCode || c.id === courseCode
-              );
-              const label = match?.courseCode || courseCode;
+                if (typeof courseItem === "string") {
+                  const match = courseItem.match(COURSE_CODE_REGEX);
+                  courseCode = match
+                    ? match[1].replace(/\s+/, " ").trim() // normalize spaces
+                    : courseItem.split(" - ")[0]?.trim() || courseItem;
+                }
 
-              return (
-                <Tag
-                  key={index}
-                  color="purple"
-                  className="text-xs"
-                  title={
-                    match
-                      ? `${match.courseCode} - ${match.courseName}`
-                      : courseCode
-                  }
-                >
-                  {label}
-                </Tag>
-              );
-            })}
-          </Space>
+                // Try to find matching course for tooltip
+                const match = (courses || []).find(
+                  (c) =>
+                    c.courseCode?.toUpperCase().replace(/\s+/g, "") ===
+                      courseCode.toUpperCase().replace(/\s+/g, "") ||
+                    c.id === courseCode
+                );
+
+                const label = match?.courseCode || courseCode;
+
+                return (
+                  <Tag
+                    key={index}
+                    color="purple"
+                    className="text-xs"
+                    title={
+                      match
+                        ? `${match.courseCode} - ${match.courseName}`
+                        : courseCode
+                    }
+                  >
+                    {label}
+                  </Tag>
+                );
+              })}
+            </Space>
+          </div>
         );
       },
     },
+
     {
       title: "Total Units",
       key: "totalUnits",
@@ -1680,12 +1687,7 @@ const StudentEnrollmentComponent: React.FC = () => {
                     {viewingStudentEnrollment.semester}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Academic Year</p>
-                  <p className="font-medium">
-                    {viewingStudentEnrollment.academicYear}
-                  </p>
-                </div>
+
                 <div>
                   <p className="text-sm text-gray-500">Total Units</p>
                   <p className="font-medium">
@@ -1708,32 +1710,53 @@ const StudentEnrollmentComponent: React.FC = () => {
             <Card>
               <h5 className="font-medium mb-3">Enrolled Courses</h5>
               <div className="space-y-2">
-                {viewingStudentEnrollment.selectedCourses.map(
-                  (courseString, index) => {
-                    const courseParts = courseString.split(" - ");
-                    const courseCode = courseParts[0];
-                    const courseName = courseParts[1]?.split(" (")[0];
-                    const unitsMatch = courseString.match(/\((\d+)\s+units?\)/);
-                    const units = unitsMatch ? unitsMatch[1] : "0";
+                {viewingStudentEnrollment.selectedCourses &&
+                viewingStudentEnrollment.selectedCourses.length > 0 ? (
+                  viewingStudentEnrollment.selectedCourses.map(
+                    (courseString, index) => {
+                      // Normalize course string
+                      const courseCode = courseString.trim().toUpperCase();
 
-                    return (
-                      <div
-                        key={index}
-                        className="flex justify-between items-center p-3 bg-black rounded-lg"
-                      >
-                        <div>
-                          <div className="font-medium text-blue-600">
-                            {courseCode}
+                      const match = courses?.find(
+                        (c) =>
+                          c.courseCode.toUpperCase() === courseCode ||
+                          c.id?.toString() === courseCode
+                      );
+
+                      const courseName = match?.courseName || "Unknown Course";
+                      const units = match?.units || 0;
+
+                      return (
+                        <div
+                          key={index}
+                          className="flex justify-between items-center p-3 bg-gray-900 rounded-lg"
+                        >
+                          <div>
+                            <div className="font-semibold text-blue-400">
+                              {courseCode}
+                            </div>
+                            <div className="text-sm text-gray-400">
+                              {courseName}
+                            </div>
                           </div>
-                          <div className="text-sm text-gray-600">
-                            {courseName}
-                          </div>
+                          <Tag color="blue">{units} units</Tag>
                         </div>
-                        <Tag color="blue">{units} units</Tag>
-                      </div>
-                    );
-                  }
+                      );
+                    }
+                  )
+                ) : (
+                  <div className="text-gray-500 text-sm">
+                    No enrolled courses
+                  </div>
                 )}
+              </div>
+
+              {/* ✅ Optional total units summary */}
+              <div className="mt-4 flex justify-end border-t border-gray-700 pt-3">
+                <span className="text-gray-300 text-sm">
+                  <strong>Total Units:</strong>{" "}
+                  {viewingStudentEnrollment.totalUnits || 0} units
+                </span>
               </div>
             </Card>
           </div>

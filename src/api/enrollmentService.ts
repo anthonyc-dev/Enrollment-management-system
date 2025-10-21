@@ -247,7 +247,7 @@ export const enrollmentService = {
 
       // Helper function to validate course codes
       const isValidCourseCode = (code: string): boolean => {
-        const courseCodePattern = /^[A-Z]{2,4}\d{2,3}$/i;
+        const courseCodePattern = /^([A-Z]{2,5}\s*\d{1,3}[A-Z0-9]*)/i;
         return courseCodePattern.test(code);
       };
 
@@ -350,12 +350,12 @@ export const enrollmentService = {
       enrollmentData.selectedCourses.forEach((courseString, index) => {
         // Parse course information from string format: "CC107 - Programming 1 (6 units)"
         const courseMatch = courseString.match(
-          /^([A-Z0-9]+)\s*-\s*([^(]+?)\s*\((\d+)\s+units?\)/i
+          /^([A-Z]+\s*\d+[A-Z0-9]*)\s*-\s*([^(]+?)\s*\((\d+)\s+units?\)/i
         );
 
         if (!courseMatch) {
           throw new Error(
-            `Invalid course format: "${courseString}". Expected format: "COURSECODE - Course Name (X units)"`
+            `Invalid course format: "${courseString}". Expected formats include "GEC 7 - Understanding The Self (3 units)", "CC102 - Programming (3 units)", or "MSM 12 - Business Math (3 units)".`
           );
         }
 
