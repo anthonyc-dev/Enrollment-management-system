@@ -7,6 +7,7 @@ import {
   Calendar,
   UserPlus,
   FileText,
+  UserCheck,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 
@@ -20,6 +21,11 @@ const enrollmentNavbar = [
     to: "/students",
     icon: Users,
     label: "Student Management",
+  },
+  {
+    to: "/co",
+    icon: UserCheck,
+    label: "Officer Management",
   },
   {
     to: "/courses",
@@ -53,7 +59,11 @@ export function EnrollmentSideMenu({ closeSidebar }: CloseSidebarProps) {
 
   const isActive = (path: string) => {
     if (path === "/" && currentPath === "/") return true;
-    if (path !== "/" && currentPath.startsWith(path)) return true;
+    if (
+      path !== "/" &&
+      (currentPath === path || currentPath.startsWith(path + "/"))
+    )
+      return true;
     return false;
   };
 
@@ -160,14 +170,14 @@ export function EnrollmentSideMenu({ closeSidebar }: CloseSidebarProps) {
           <div className="space-y-2">
             <NavLink
               to="/enroll"
-              className="flex items-center gap-2 rounded-lg text-white px-3 py-2.5 text-sm font-medium transition-all duration-300 group cursor-pointer hover:bg-gray-800"
+              className="flex items-center gap-2 rounded-lg text-white px-4 py-2.5 text-sm font-medium transition-all duration-300 group cursor-pointer hover:bg-gray-800"
             >
               <UserPlus className="h-4 w-4" />
               <span>Quick Enroll</span>
             </NavLink>
             <NavLink
               to="/records"
-              className="flex items-center gap-2 rounded-lg text-white px-3 py-2.5 text-sm font-medium transition-all duration-300 group cursor-pointer hover:bg-gray-800"
+              className="flex items-center gap-2 rounded-lg text-white px-4 py-2.5 text-sm font-medium transition-all duration-300 group cursor-pointer hover:bg-gray-800"
             >
               <FileText className="h-4 w-4" />
               <span>View Records</span>

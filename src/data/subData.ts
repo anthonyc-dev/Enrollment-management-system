@@ -68,7 +68,9 @@ export interface Instructor {
 }
 
 // Function to get clearing officers as instructors
-export const getClearingOfficersAsInstructors = async (): Promise<Instructor[]> => {
+export const getClearingOfficersAsInstructors = async (): Promise<
+  Instructor[]
+> => {
   try {
     const officers = await clearingOfficerService.getAllClearingOfficers();
     return officers.map((officer: ClearingOfficer, index: number) => ({

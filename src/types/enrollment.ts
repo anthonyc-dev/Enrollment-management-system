@@ -355,3 +355,18 @@ export interface EnrollmentStats {
     completedEnrollments: number;
   }[];
 }
+
+export interface ClearingOfficer {
+  id: string;
+  schoolId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  password?: string;
+  role?: string;
+  department?: string;
+  position?: string;
+
+  createdAt?: string;
+}

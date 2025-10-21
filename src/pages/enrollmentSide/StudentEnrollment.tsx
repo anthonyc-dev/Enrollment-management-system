@@ -27,8 +27,6 @@ import {
   EyeOutlined,
   EditOutlined,
   DeleteOutlined,
-  HomeOutlined,
-  ClockCircleOutlined,
 } from "@ant-design/icons";
 import { type ColumnsType } from "antd/es/table";
 import type {
@@ -895,28 +893,6 @@ const StudentEnrollmentComponent: React.FC = () => {
       ),
     },
     {
-      title: "Schedule",
-      key: "schedule",
-      render: (_, record) => (
-        <Space direction="vertical" size="small">
-          <div className="flex items-center gap-2">
-            <CalendarOutlined className="text-indigo-500" />
-            <span className="font-medium">{record.day}</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <ClockCircleOutlined className="text-gray-400" />
-            <span>
-              {record.timeStart} - {record.timeEnd}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <HomeOutlined className="text-gray-400" />
-            <span>{record.room}</span>
-          </div>
-        </Space>
-      ),
-    },
-    {
       title: "Courses",
       key: "courses",
       render: (_, record) => {
@@ -1687,6 +1663,12 @@ const StudentEnrollmentComponent: React.FC = () => {
                     {viewingStudentEnrollment.semester}
                   </p>
                 </div>
+                <div>
+                  <p className="text-sm text-gray-500">Enrollment Status</p>
+                  <p className="font-medium">
+                    {viewingStudentEnrollment.status}
+                  </p>
+                </div>
 
                 <div>
                   <p className="text-sm text-gray-500">Total Units</p>
@@ -1714,9 +1696,9 @@ const StudentEnrollmentComponent: React.FC = () => {
                 viewingStudentEnrollment.selectedCourses.length > 0 ? (
                   viewingStudentEnrollment.selectedCourses.map(
                     (courseString, index) => {
-                      // Normalize course string
                       const courseCode = courseString.trim().toUpperCase();
 
+                      // Find matching course data
                       const match = courses?.find(
                         (c) =>
                           c.courseCode.toUpperCase() === courseCode ||
@@ -1725,21 +1707,45 @@ const StudentEnrollmentComponent: React.FC = () => {
 
                       const courseName = match?.courseName || "Unknown Course";
                       const units = match?.units || 0;
+                      const day = match?.day || "N/A";
+                      const timeStart = match?.timeStart || "N/A";
+                      const timeEnd = match?.timeEnd || "N/A";
+                      const room = match?.room || "N/A";
+                      const instructor = match?.instructor || "N/A";
 
                       return (
                         <div
                           key={index}
-                          className="flex justify-between items-center p-3 bg-gray-900 rounded-lg"
+                          className="flex flex-col p-3 bg-gray-900 rounded-lg space-y-2"
                         >
-                          <div>
-                            <div className="font-semibold text-blue-400">
-                              {courseCode}
+                          {/* Course Header */}
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <div className="font-semibold text-blue-400">
+                                {courseCode}
+                              </div>
+                              <div className="text-sm text-gray-400">
+                                {courseName}
+                              </div>
                             </div>
-                            <div className="text-sm text-gray-400">
-                              {courseName}
+                            <Tag color="blue">{units} units</Tag>
+                          </div>
+
+                          {/* Schedule Details */}
+                          <div className="text-xs text-gray-400 border-t border-gray-800 pt-2">
+                            <div>
+                              <strong>Day:</strong> {day}
+                            </div>
+                            <div>
+                              <strong>Time:</strong> {timeStart} - {timeEnd}
+                            </div>
+                            <div>
+                              <strong>Room:</strong> {room}
+                            </div>
+                            <div>
+                              <strong>Instructor:</strong> {instructor}
                             </div>
                           </div>
-                          <Tag color="blue">{units} units</Tag>
                         </div>
                       );
                     }
@@ -1751,7 +1757,7 @@ const StudentEnrollmentComponent: React.FC = () => {
                 )}
               </div>
 
-              {/* ✅ Optional total units summary */}
+              {/* ✅ Total Units Summary */}
               <div className="mt-4 flex justify-end border-t border-gray-700 pt-3">
                 <span className="text-gray-300 text-sm">
                   <strong>Total Units:</strong>{" "}

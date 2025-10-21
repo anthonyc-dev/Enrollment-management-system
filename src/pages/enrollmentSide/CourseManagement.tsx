@@ -28,7 +28,13 @@ import { type ColumnsType } from "antd/es/table";
 import { AxiosError } from "axios";
 import { courseService } from "../../api/courseService";
 import type { Course, CreateCourseForm } from "../../types/enrollment";
-import { departments } from "@/data/subData";
+import {
+  departments,
+  getClearingOfficersAsInstructors,
+  semesters,
+  yearLevels,
+  type Instructor,
+} from "@/data/subData";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -45,6 +51,8 @@ const CourseManagement: React.FC = () => {
   const [filters, setFilters] = useState({
     department: "",
   });
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
+
   const [courseForm] = Form.useForm();
 
   // Fetch courses data
@@ -86,7 +94,20 @@ const CourseManagement: React.FC = () => {
     }
   };
 
+  const fetchInstructors = async () => {
+    setLoading(true);
+    try {
+      const data = await getClearingOfficersAsInstructors();
+      setInstructors(data);
+    } catch (error) {
+      console.error("Error loading instructors:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
+    fetchInstructors();
     fetchData();
   }, []);
 
@@ -555,7 +576,7 @@ const CourseManagement: React.FC = () => {
         onOk={handleCourseModalOk}
         okText={editingCourse ? "Update Course" : "Add Course"}
         confirmLoading={courseLoading}
-        width={600}
+        width={800}
       >
         <Form form={courseForm} layout="vertical">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -619,10 +640,8 @@ const CourseManagement: React.FC = () => {
           </div>
 
           {/* Section-Specific Fields */}
-          <div className="border-t pt-4 mt-4">
-            <h4 className="text-lg font-semibold mb-4 text-gray-700">
-              Schedule & Capacity
-            </h4>
+          <div className="border-t border-white/30 pt-4 mt-4">
+            <h4 className=" font-semibold mb-4">Schedule & Capacity</h4>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Form.Item
@@ -693,20 +712,46 @@ const CourseManagement: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Form.Item name="instructor" label="Instructor">
-                <Input placeholder="Instructor name" />
+              {/* Instructor Dropdown */}
+              <Form.Item
+                name="instructor"
+                label="Instructor"
+                rules={[
+                  { required: true, message: "Please select an instructor" },
+                ]}
+              >
+                <Select
+                  placeholder="Select instructor"
+                  loading={loading}
+                  notFoundContent={
+                    loading ? <Spin size="small" /> : "No instructors found"
+                  }
+                  allowClear
+                >
+                  {instructors.map((inst) => (
+                    <Option key={inst.id} value={inst.name}>
+                      {inst.name}
+                    </Option>
+                  ))}
+                </Select>
               </Form.Item>
+
+              {/* Semester Dropdown */}
               <Form.Item
                 name="semester"
                 label="Semester"
                 rules={[{ required: true, message: "Please select semester" }]}
               >
-                <Select placeholder="Select semester">
-                  <Option value="1st Semester">1st Semester</Option>
-                  <Option value="2nd Semester">2nd Semester</Option>
-                  <Option value="Summer">Summer</Option>
+                <Select placeholder="Select semester" allowClear>
+                  {semesters.map((sem) => (
+                    <Option key={sem.id} value={sem.semesterName}>
+                      {sem.semesterName}
+                    </Option>
+                  ))}
                 </Select>
               </Form.Item>
+
+              {/* Year Level Dropdown */}
               <Form.Item
                 name="yearLevel"
                 label="Year Level"
@@ -714,11 +759,12 @@ const CourseManagement: React.FC = () => {
                   { required: true, message: "Please select year level" },
                 ]}
               >
-                <Select placeholder="Select year level">
-                  <Option value="1st Year">1st Year</Option>
-                  <Option value="2nd Year">2nd Year</Option>
-                  <Option value="3rd Year">3rd Year</Option>
-                  <Option value="4th Year">4th Year</Option>
+                <Select placeholder="Select year level" allowClear>
+                  {yearLevels.map((year) => (
+                    <Option key={year} value={year}>
+                      {year}
+                    </Option>
+                  ))}
                 </Select>
               </Form.Item>
             </div>

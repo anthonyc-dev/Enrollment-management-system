@@ -10,6 +10,7 @@ import CourseManagement from "../pages/enrollmentSide/CourseManagement";
 import SemesterManagement from "../pages/enrollmentSide/SemesterManagement";
 import StudentEnrollment from "../pages/enrollmentSide/StudentEnrollment";
 import EnrollmentRecords from "../pages/enrollmentSide/EnrollmentRecords";
+import CoManagement from "@/pages/enrollmentSide/CoManagement";
 
 const AppRoutes: React.FC = () => {
   return (
@@ -25,6 +26,7 @@ const AppRoutes: React.FC = () => {
       >
         <Route index element={<EnrollmentDashboard />} />
         <Route path="students" element={<StudentManagement />} />
+        <Route path="co" element={<CoManagement />} />
         <Route path="courses" element={<CourseManagement />} />
         <Route path="semester" element={<SemesterManagement />} />
         <Route path="enroll" element={<StudentEnrollment />} />

@@ -37,7 +37,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
           {/* Title */}
           <Button
             onClick={toggleSidebar}
-            className="lg:hidden rounded-md hover:bg-gray-100 mr-2"
+            className="lg:hidden rounded-md hover:bg-gray-100 mr-2 text-green-600"
             variant="ghost"
           >
             <Menu className="h-12 w-12" />

@@ -33,7 +33,7 @@ export const clearingOfficerService = {
   getAllClearingOfficers: async (): Promise<ClearingOfficer[]> => {
     try {
       const response = await axiosInstance.get(
-        `${API_BASE_URL}/clearing-officers`
+        `${API_BASE_URL}/getAllCoInASCS`
       );
 
       // Handle different response formats
