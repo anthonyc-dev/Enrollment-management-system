@@ -11,6 +11,8 @@ import SemesterManagement from "../pages/enrollmentSide/SemesterManagement";
 import StudentEnrollment from "../pages/enrollmentSide/StudentEnrollment";
 import EnrollmentRecords from "../pages/enrollmentSide/EnrollmentRecords";
 import CoManagement from "@/pages/enrollmentSide/CoManagement";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import PublicRoute from "@/components/PublicRoute";
 
 const AppRoutes: React.FC = () => {
   return (
@@ -19,9 +21,9 @@ const AppRoutes: React.FC = () => {
       <Route
         path="/"
         element={
-          // <ProtectedRoute allowedRoles={["admin"]}>
-          <EnrollmentLayout />
-          // </ProtectedRoute>
+          <ProtectedRoute>
+            <EnrollmentLayout />
+          </ProtectedRoute>
         }
       >
         <Route index element={<EnrollmentDashboard />} />
@@ -32,7 +34,14 @@ const AppRoutes: React.FC = () => {
         <Route path="enroll" element={<StudentEnrollment />} />
         <Route path="records" element={<EnrollmentRecords />} />
       </Route>
-      <Route path="enrollmentLogin" element={<EnrollmentLogin />} />
+      <Route
+        path="enrollmentLogin"
+        element={
+          <PublicRoute>
+            <EnrollmentLogin />
+          </PublicRoute>
+        }
+      />
 
       <Route path="unauthorized" element={<Unauthorized />} />
     </Routes>

@@ -1,44 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-
 import { BookOpen, GraduationCap } from "lucide-react";
-import { useAuth } from "../../authentication/useAuth";
+
 import { loginSchema, type LoginData } from "../../lib/validation";
 import FormInput from "../../components/myUi/auth/FormInput";
 import AuthButton from "../../components/myUi/auth/AuthButton";
 import StatusModal from "../../components/myUi/auth/StatusModal";
+import axiosInstance from "@/api/axios";
+import type { AxiosError } from "axios";
 
 export default function EnrollmentLogin() {
-  const [error, setError] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isSuccessModalVisible, setIsSuccessModalVisible] =
-    useState<boolean>(false);
   const navigate = useNavigate();
 
-  const { login, role, user, isAuthenticated } = useAuth();
+  // ✅ State management
+  const [error, setError] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
 
-  // Redirect based on role if already authenticated
-  useEffect(() => {
-    if (!isAuthenticated || !role) return;
-
-    if (role === "admin") {
-      // Admin can access enrollment system
-      setIsSuccessModalVisible(true);
-      return;
-    } else if (role === "enrollmentOfficer") {
-      // Enrollment officer can access enrollment system
-      setIsSuccessModalVisible(true);
-      return;
-    } else {
-      // Other roles should not access enrollment system
-      setError(
-        "Access denied. Only administrators and enrollment officers can access this system."
-      );
-    }
-  }, [isAuthenticated, role]);
-
+  // ✅ React Hook Form setup
   const {
     register,
     handleSubmit,
@@ -46,52 +27,70 @@ export default function EnrollmentLogin() {
   } = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
     mode: "onTouched",
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    defaultValues: { email: "", password: "" },
   });
 
+  // ✅ Login handler
+  const handleLogin = async (email: string, password: string) => {
+    const res = await axiosInstance.post("/enrollment-auth/login", {
+      email,
+      password,
+    });
+
+    // Store token securely
+    localStorage.setItem("accessToken", res.data.accessToken);
+    return res.data;
+  };
+
+  // ✅ Form submit handler
   const onSubmit = async (data: LoginData) => {
     setIsLoading(true);
     setError("");
 
     try {
-      await login(data.email, data.password);
+      const userData = await handleLogin(data.email, data.password);
+      // Show success modal
       setIsSuccessModalVisible(true);
-    } catch (error: unknown) {
-      const axiosError = error as {
-        response?: { status?: number; data?: { error?: string } };
-        request?: unknown;
-      };
-      if (axiosError.response) {
-        const { status } = axiosError.response;
 
-        if (status === 401 || status === 404 || status === 400) {
-          setError(
-            axiosError.response.data?.error ||
-              "Wrong credentials. Please try again."
-          );
+      // Optional: Save user info
+      localStorage.setItem("user", JSON.stringify(userData.user || {}));
+    } catch (err: unknown) {
+      // ✅ Type-safe error handling
+      if (typeof err === "object" && err !== null && "isAxiosError" in err) {
+        const axiosError = err as AxiosError<{ error?: string }>;
+
+        if (axiosError.response) {
+          const { status } = axiosError.response;
+          if ([400, 401, 404].includes(status)) {
+            setError(
+              axiosError.response.data?.error ||
+                "Wrong credentials. Please try again."
+            );
+          } else {
+            setError("Server error. Please try again later.");
+          }
+        } else if (axiosError.request) {
+          setError("Network error. Please check your connection.");
+        } else {
+          setError("Unexpected error. Please try again.");
         }
-      } else if (axiosError.request) {
-        setError("Network error. Please check your connection and try again.");
       } else {
-        setError("An unexpected error occurred. Please try again.");
+        // Non-Axios errors (e.g., runtime)
+        setError("Unexpected error occurred. Please try again.");
       }
     } finally {
       setIsLoading(false);
     }
   };
-
+  // ✅ Handle success modal
   const handleSuccessModalOk = () => {
     setIsSuccessModalVisible(false);
-    // Redirect to enrollment dashboard after successful login
-    navigate("/enrollment");
+    navigate("/"); // redirect to dashboard
   };
 
   return (
     <div className="min-h-screen flex">
-      {/* Left side: Image and branding */}
+      {/* Left side: branding */}
       <div className="hidden lg:flex flex-1 items-center justify-center bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900">
         <div className="text-center text-white p-8">
           <div className="flex justify-center mb-8">
@@ -99,7 +98,6 @@ export default function EnrollmentLogin() {
               <GraduationCap className="h-16 w-16 text-white" />
             </div>
           </div>
-
           <h1 className="text-4xl font-bold mb-4">Enrollment Management</h1>
           <p className="text-xl text-blue-100 mb-8">
             Streamline student enrollment with our comprehensive management
@@ -126,7 +124,6 @@ export default function EnrollmentLogin() {
       {/* Right side: Login form */}
       <div className="flex flex-col justify-center flex-1 px-6 py-12 bg-[#0F0E0E]">
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-          {/* Logo and branding */}
           <div className="flex justify-center mb-6">
             <div className="flex items-center gap-3">
               <img
@@ -222,9 +219,9 @@ export default function EnrollmentLogin() {
       <StatusModal
         isOpen={isSuccessModalVisible}
         onOk={handleSuccessModalOk}
-        role={role || ""}
+        role=""
         successTitle="Login Successful"
-        successMessage={`Welcome back, ${user?.firstName}! Accessing Enrollment Management System...`}
+        successMessage="Welcome back! Accessing Enrollment Management System..."
         errorTitle="Access Denied"
         errorMessage={
           error ||

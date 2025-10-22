@@ -1,22 +1,15 @@
-import { BellIcon, LogOut, Menu, User } from "lucide-react";
+import { BellIcon, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
-import { useAuth } from "../../authentication/useAuth";
 import NotificationDrawer from "../NotificationDrawer";
+import UserDropdown from "./UserLogoutDropdown";
 
 interface NavbarProps {
   toggleSidebar: () => void;
 }
 const Navbar = ({ toggleSidebar }: NavbarProps) => {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const { logout } = useAuth();
 
   const notificationCount = 3;
 
@@ -94,19 +87,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
             />
 
             {/* User Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <User size={24} className="text-white/50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={logout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <UserDropdown />
           </div>
         </div>
       </div>
