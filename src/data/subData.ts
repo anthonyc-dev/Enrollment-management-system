@@ -17,6 +17,7 @@ export const departments = [
   "Bachelor in Secondary Education Major in Mathematics",
   "Bachelor in Secondary Education Major in Science",
   "Bachelor in Secondary Education Major in Filipino",
+  "All Departments",
 ];
 
 export const yearLevels = [
