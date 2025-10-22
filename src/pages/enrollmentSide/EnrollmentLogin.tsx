@@ -10,6 +10,7 @@ import AuthButton from "../../components/myUi/auth/AuthButton";
 import StatusModal from "../../components/myUi/auth/StatusModal";
 import axiosInstance from "@/api/axios";
 import type { AxiosError } from "axios";
+import axios from "axios";
 
 export default function EnrollmentLogin() {
   const navigate = useNavigate();
@@ -21,13 +22,12 @@ export default function EnrollmentLogin() {
 
   // ✅ React Hook Form setup
   const {
-    register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
     mode: "onTouched",
-    defaultValues: { email: "", password: "" },
   });
 
   // ✅ Login handler
@@ -55,28 +55,25 @@ export default function EnrollmentLogin() {
       // Optional: Save user info
       localStorage.setItem("user", JSON.stringify(userData.user || {}));
     } catch (err: unknown) {
-      // ✅ Type-safe error handling
-      if (typeof err === "object" && err !== null && "isAxiosError" in err) {
-        const axiosError = err as AxiosError<{ error?: string }>;
+      const axiosError = err as AxiosError<{ error?: string }>;
 
+      if (axios.isAxiosError(axiosError)) {
         if (axiosError.response) {
-          const { status } = axiosError.response;
+          const { status, data } = axiosError.response;
+
           if ([400, 401, 404].includes(status)) {
-            setError(
-              axiosError.response.data?.error ||
-                "Wrong credentials. Please try again."
-            );
+            setError(data?.error || "Wrong credentials. Please try again.");
           } else {
             setError("Server error. Please try again later.");
           }
         } else if (axiosError.request) {
           setError("Network error. Please check your connection.");
         } else {
-          setError("Unexpected error. Please try again.");
+          setError("Unexpected error occurred. Please try again.");
         }
       } else {
-        // Non-Axios errors (e.g., runtime)
-        setError("Unexpected error occurred. Please try again.");
+        // Non-Axios errors
+        setError("Something went wrong. Please try again.");
       }
     } finally {
       setIsLoading(false);
@@ -91,7 +88,7 @@ export default function EnrollmentLogin() {
   return (
     <div className="min-h-screen flex">
       {/* Left side: branding */}
-      <div className="hidden lg:flex flex-1 items-center justify-center bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900">
+      <div className="hidden lg:flex flex-1 items-center justify-center bg-gradient-to-br from-green-900 via-green-800 to-green-900">
         <div className="text-center text-white p-8">
           <div className="flex justify-center mb-8">
             <div className="bg-white/10 backdrop-blur-sm rounded-full p-6">
@@ -99,7 +96,7 @@ export default function EnrollmentLogin() {
             </div>
           </div>
           <h1 className="text-4xl font-bold mb-4">Enrollment Management</h1>
-          <p className="text-xl text-blue-100 mb-8">
+          <p className="text-xl text-green-100 mb-8">
             Streamline student enrollment with our comprehensive management
             system
           </p>
@@ -163,9 +160,8 @@ export default function EnrollmentLogin() {
             <FormInput
               id="email"
               type="email"
-              autoComplete="email"
               placeholder="admin@ncmc.edu.ph"
-              register={register}
+              control={control}
               label="Email address"
               error={errors.email}
             />
@@ -173,15 +169,14 @@ export default function EnrollmentLogin() {
             <FormInput
               id="password"
               type="password"
-              autoComplete="current-password"
               placeholder="Enter your password"
-              register={register}
+              control={control}
               label="Password"
               error={errors.password}
             />
 
             <div className="text-sm my-5 flex justify-end">
-              <a href="#" className="text-indigo-600 hover:text-indigo-500">
+              <a href="#" className="text-green-600 hover:text-green-500">
                 Forgot password?
               </a>
             </div>
@@ -189,7 +184,7 @@ export default function EnrollmentLogin() {
             <AuthButton
               isLoading={isLoading}
               label="Sign in to Enrollment"
-              type="submit"
+              htmlType="submit"
             />
           </form>
 
@@ -198,7 +193,7 @@ export default function EnrollmentLogin() {
             <Link
               to="https://ncmcmaranding.com/contact-us"
               target="_blank"
-              className="text-indigo-600 hover:underline hover:text-indigo-500 transition"
+              className="text-green-600 hover:underline hover:text-green-500 transition"
             >
               Contact system administrator
             </Link>
@@ -208,7 +203,7 @@ export default function EnrollmentLogin() {
             Back to{" "}
             <Link
               to="/"
-              className="text-indigo-600 hover:underline hover:text-indigo-500 transition"
+              className="text-green-600 hover:underline hover:text-green-500 transition"
             >
               main portal
             </Link>

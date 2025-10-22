@@ -1,28 +1,31 @@
-import React from "react";
-import { type FieldError } from "react-hook-form";
+import {
+  Controller,
+  type Control,
+  type FieldError,
+  type FieldValues,
+  type Path,
+} from "react-hook-form";
+import { Input } from "antd";
 
-interface FormInputProps {
-  id: string;
+interface FormInputProps<T extends FieldValues> {
+  id: Path<T>; // ensures id matches keys in your form schema
   type?: string;
   placeholder?: string;
   autoComplete?: string;
   error?: FieldError;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  register: any;
+  control: Control<T>;
   label?: string;
-  className?: string;
 }
 
-const FormInput: React.FC<FormInputProps> = ({
+const FormInput = <T extends FieldValues>({
   id,
-  type,
+  type = "text",
   placeholder,
   autoComplete,
   error,
-  register,
+  control,
   label,
-  className,
-}) => {
+}: FormInputProps<T>) => {
   return (
     <div>
       {label && (
@@ -33,16 +36,21 @@ const FormInput: React.FC<FormInputProps> = ({
           {label}
         </label>
       )}
-      <input
-        id={id}
-        type={type}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        {...register(id)}
-        className={`block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 ${
-          error ? "border border-red-500" : ""
-        } ${className}`}
+
+      <Controller
+        name={id}
+        control={control}
+        render={({ field }) => (
+          <Input
+            {...field}
+            id={id}
+            type={type}
+            placeholder={placeholder}
+            autoComplete={autoComplete}
+          />
+        )}
       />
+
       {error && <p className="text-xs text-red-600 mt-1">{error.message}</p>}
     </div>
   );
