@@ -245,24 +245,21 @@ export const enrollmentService = {
         return [];
       }
 
-      // Helper function to validate course codes
-      const isValidCourseCode = (code: string): boolean => {
-        const courseCodePattern = /^([A-Z]{2,5}\s*\d{1,3}[A-Z0-9]*)/i;
-        return courseCodePattern.test(code);
-      };
-
       // Transform data to match StudentEnrollment interface
       return data.map((item: RawEnrollmentData) => {
         // Get course codes from prerequisites array or selectedCourses
         let courseCodes: string[] = [];
 
         if (item.prerequisites && Array.isArray(item.prerequisites)) {
-          // Filter out invalid course codes from prerequisites
-          courseCodes = item.prerequisites.filter(
-            (code) => typeof code === "string" && isValidCourseCode(code.trim())
-          );
+          // Include all course codes from prerequisites array, with better validation
+          courseCodes = item.prerequisites
+            .filter(
+              (code) => typeof code === "string" && code.trim().length > 0
+            )
+            .map((code) => code.trim());
+
           console.log(
-            `Enrollment ${item.id}: Found ${item.prerequisites.length} prerequisites, ${courseCodes.length} valid course codes:`,
+            `Enrollment ${item.id}: Found ${item.prerequisites.length} prerequisites, ${courseCodes.length} course codes:`,
             courseCodes
           );
         } else if (
@@ -350,7 +347,7 @@ export const enrollmentService = {
       enrollmentData.selectedCourses.forEach((courseString, index) => {
         // Parse course information from string format: "CC107 - Programming 1 (6 units)"
         const courseMatch = courseString.match(
-          /^([A-Z]+\s*\d+[A-Z0-9]*)\s*-\s*([^(]+?)\s*\((\d+)\s+units?\)/i
+          /^([A-Za-z]+(?:\s+[A-Za-z]+)*(?:\s*\d{1,3}[A-Za-z0-9-]*)?)\s*-\s*(.+?)\s*\((\d+)\s+units?\)$/i
         );
 
         if (!courseMatch) {
@@ -454,9 +451,10 @@ export const enrollmentService = {
     updateData: UpdateStudentEnrollmentForm
   ): Promise<StudentEnrollment> => {
     try {
-      // Calculate total units if selectedCourses is being updated
+      // Calculate total units and derive prerequisites (course codes) if selectedCourses is being updated
       let totalUnits: number | undefined;
-      if (updateData.selectedCourses) {
+      let prerequisites: string[] | undefined;
+      if (Array.isArray(updateData.selectedCourses)) {
         totalUnits = updateData.selectedCourses.reduce(
           (total, courseString) => {
             const unitsMatch = courseString.match(/\((\d+)\s+units?\)/);
@@ -464,10 +462,23 @@ export const enrollmentService = {
           },
           0
         );
+
+        // Extract course codes from strings like "CC102 - Programming (3 units)"
+        prerequisites = updateData.selectedCourses
+          .map((courseString) => {
+            const match = courseString.match(
+              /^([A-Za-z]+(?:\s+[A-Za-z]+)*(?:\s*\d{1,3}[A-Za-z0-9-]*)?)\s*-\s*.+?\s*\(\d+\s+units?\)$/i
+            );
+            return match ? match[1].trim() : undefined;
+          })
+          .filter(
+            (code): code is string =>
+              typeof code === "string" && code.length > 0
+          );
       }
 
-      // Clean payload - only include defined fields
-      const payload: Partial<StudentEnrollment> = {};
+      // Build payload - only include defined fields; also sync prerequisites and updatedAt
+      const payload: Record<string, unknown> = {};
 
       if (updateData.firstName !== undefined)
         payload.firstName = updateData.firstName;
@@ -485,7 +496,12 @@ export const enrollmentService = {
         payload.academicYear = updateData.academicYear;
       if (updateData.selectedCourses !== undefined)
         payload.selectedCourses = updateData.selectedCourses;
-      if (totalUnits !== undefined) payload.totalUnits = totalUnits;
+      if (prerequisites !== undefined) payload.prerequisites = prerequisites;
+      if (totalUnits !== undefined) {
+        payload.totalUnits = totalUnits;
+        payload.units = totalUnits; // keep in sync for backends using `units`
+      }
+      payload.updatedAt = new Date().toISOString();
 
       const response = await axios.put(
         `${ENROLLMENT_BASE_URL}/updateEnrollment/${id}`,

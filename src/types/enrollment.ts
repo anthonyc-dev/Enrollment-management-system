@@ -38,10 +38,19 @@ export interface Course {
   instructor?: string;
   semester?: string;
   yearLevel?: string;
+  schedules?: Schedule[];
 
   status?: "Active" | "Inactive";
   dateCreated: string;
   dateUpdated: string;
+}
+
+export interface Schedule {
+  day: string;
+  timeStart: string;
+  timeEnd: string;
+  room: string;
+  instructor: string;
 }
 
 export interface Section {
@@ -186,6 +195,7 @@ export interface CreateCourseForm {
   instructor?: string;
   semester?: string;
   yearLevel?: string;
+  schedules?: Schedule[];
 }
 
 export interface CreateSectionForm {

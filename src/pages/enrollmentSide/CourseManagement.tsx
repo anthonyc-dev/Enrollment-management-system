@@ -14,6 +14,7 @@ import {
   InputNumber,
   Spin,
   TimePicker,
+  Dropdown,
 } from "antd";
 import dayjs from "dayjs";
 import {
@@ -23,6 +24,7 @@ import {
   EditOutlined,
   SearchOutlined,
   EyeOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import { type ColumnsType } from "antd/es/table";
 import { AxiosError } from "axios";
@@ -139,9 +141,9 @@ const CourseManagement: React.FC = () => {
       courseForm.setFieldsValue({
         units: 3,
         maxCapacity: 30,
-        day: "Monday",
         semester: "1st Semester",
         yearLevel: "1st Year",
+        schedules: [], // Initialize with empty schedules array
       });
     }, 0);
     setIsCourseModalOpen(true);
@@ -149,17 +151,30 @@ const CourseManagement: React.FC = () => {
 
   const handleEditCourse = (course: Course) => {
     setEditingCourse(course);
+
+    // Prepare schedules data for the form
+    const schedulesData =
+      course.schedules && course.schedules.length > 0
+        ? course.schedules.map((schedule) => ({
+            day: schedule.day,
+            timeStart: schedule.timeStart
+              ? dayjs(schedule.timeStart, "hh:mm A")
+              : null,
+            timeEnd: schedule.timeEnd
+              ? dayjs(schedule.timeEnd, "hh:mm A")
+              : null,
+            room: schedule.room || "",
+            instructor: schedule.instructor || "",
+          }))
+        : [];
+
     courseForm.setFieldsValue({
       ...course,
       prerequisites: course.prerequisites || [],
       maxCapacity: course.maxCapacity || 30,
-      day: course.day || "Monday",
-      timeStart: course.timeStart ? dayjs(course.timeStart, "HH:mm A") : null,
-      timeEnd: course.timeEnd ? dayjs(course.timeEnd, "HH:mm A") : null,
-      room: course.room || "",
-      instructor: course.instructor || "",
       semester: course.semester || "1st Semester",
       yearLevel: course.yearLevel || "1st Year",
+      schedules: schedulesData,
     });
     setIsCourseModalOpen(true);
   };
@@ -196,13 +211,21 @@ const CourseManagement: React.FC = () => {
 
       console.log("Form values:", values);
 
-      // Validate time fields
-      if (values.timeStart && values.timeEnd) {
-        const startTime = dayjs(values.timeStart);
-        const endTime = dayjs(values.timeEnd);
-        if (startTime.isAfter(endTime) || startTime.isSame(endTime)) {
-          message.error("Start time must be before end time");
-          return;
+      // Validate schedules if provided
+      if (values.schedules && values.schedules.length > 0) {
+        for (const schedule of values.schedules) {
+          if (schedule.timeStart && schedule.timeEnd) {
+            const startTime = dayjs(schedule.timeStart);
+            const endTime = dayjs(schedule.timeEnd);
+            if (startTime.isAfter(endTime) || startTime.isSame(endTime)) {
+              message.error(
+                `Start time must be before end time for schedule ${
+                  values.schedules.indexOf(schedule) + 1
+                }`
+              );
+              return;
+            }
+          }
         }
       }
 
@@ -219,18 +242,32 @@ const CourseManagement: React.FC = () => {
             : [],
           // Section-specific fields
           maxCapacity: Number(values.maxCapacity) || 30,
-          day: values.day,
-          timeStart: values.timeStart
-            ? dayjs(values.timeStart).format("hh:mm A")
-            : "",
-          timeEnd: values.timeEnd
-            ? dayjs(values.timeEnd).format("hh:mm A")
-            : "",
-          room: values.room?.trim() || "",
-          instructor: values.instructor?.trim() || "",
           semester: values.semester,
           yearLevel: values.yearLevel,
         };
+
+        // Add schedules if provided
+        if (values.schedules && values.schedules.length > 0) {
+          updateData.schedules = values.schedules.map(
+            (schedule: {
+              day: string;
+              timeStart: dayjs.Dayjs | null;
+              timeEnd: dayjs.Dayjs | null;
+              room: string;
+              instructor: string;
+            }) => ({
+              day: schedule.day,
+              timeStart: schedule.timeStart
+                ? dayjs(schedule.timeStart).format("hh:mm A")
+                : "",
+              timeEnd: schedule.timeEnd
+                ? dayjs(schedule.timeEnd).format("hh:mm A")
+                : "",
+              room: schedule.room?.trim() || "",
+              instructor: schedule.instructor?.trim() || "",
+            })
+          );
+        }
         console.log("Updating course with data:", updateData);
         await courseService.updateCourse(editingCourse.id, updateData);
         await fetchData();
@@ -248,18 +285,32 @@ const CourseManagement: React.FC = () => {
             : [],
           // Section-specific fields
           maxCapacity: Number(values.maxCapacity) || 30,
-          day: values.day || "Monday",
-          timeStart: values.timeStart
-            ? dayjs(values.timeStart).format("hh:mm A")
-            : "08:00 AM",
-          timeEnd: values.timeEnd
-            ? dayjs(values.timeEnd).format("hh:mm A")
-            : "10:00 AM",
-          room: values.room?.trim() || "",
-          instructor: values.instructor?.trim() || "",
           semester: values.semester || "1st Semester",
           yearLevel: values.yearLevel || "1st Year",
         };
+
+        // Add schedules if provided
+        if (values.schedules && values.schedules.length > 0) {
+          courseData.schedules = values.schedules.map(
+            (schedule: {
+              day: string;
+              timeStart: dayjs.Dayjs | null;
+              timeEnd: dayjs.Dayjs | null;
+              room: string;
+              instructor: string;
+            }) => ({
+              day: schedule.day,
+              timeStart: schedule.timeStart
+                ? dayjs(schedule.timeStart).format("hh:mm A")
+                : "",
+              timeEnd: schedule.timeEnd
+                ? dayjs(schedule.timeEnd).format("hh:mm A")
+                : "",
+              room: schedule.room?.trim() || "",
+              instructor: schedule.instructor?.trim() || "",
+            })
+          );
+        }
 
         console.log("Creating course with data:", courseData);
         const result = await courseService.createCourse(courseData);
@@ -382,6 +433,70 @@ const CourseManagement: React.FC = () => {
       title: "Schedule",
       key: "schedule",
       render: (_, record) => {
+        // Handle new schedules array format
+        if (record.schedules && record.schedules.length > 0) {
+          const firstSchedule = record.schedules[0];
+          const remainingSchedules = record.schedules.slice(1);
+
+          const scheduleItems = record.schedules.map((schedule, index) => ({
+            key: index,
+            label: (
+              <div className="text-sm py-2">
+                <div className="font-medium text-blue-800">{schedule.day}</div>
+                <div className="text-gray-600">
+                  {schedule.timeStart} - {schedule.timeEnd}
+                </div>
+                <div className="text-xs text-gray-500">
+                  Room: {schedule.room}
+                </div>
+                <div className="text-xs text-green-600">
+                  Instructor: {schedule.instructor}
+                </div>
+              </div>
+            ),
+          }));
+
+          return (
+            <div className="text-sm">
+              {/* Show first schedule */}
+              <div className="border-l-2 border-blue-200 pl-2">
+                <div className="font-medium text-blue-800">
+                  {firstSchedule.day}
+                </div>
+                <div className="text-gray-600">
+                  {firstSchedule.timeStart} - {firstSchedule.timeEnd}
+                </div>
+                <div className="text-xs text-gray-500">
+                  Room: {firstSchedule.room}
+                </div>
+                <div className="text-xs text-green-600">
+                  Instructor: {firstSchedule.instructor}
+                </div>
+              </div>
+
+              {/* Show dropdown for additional schedules */}
+              {remainingSchedules.length > 0 && (
+                <Dropdown
+                  menu={{ items: scheduleItems }}
+                  trigger={["click"]}
+                  placement="bottomLeft"
+                >
+                  <Button
+                    type="link"
+                    size="small"
+                    className="p-0 h-auto text-blue-600 hover:text-blue-800"
+                  >
+                    +{remainingSchedules.length} more schedule
+                    {remainingSchedules.length > 1 ? "s" : ""}
+                    <DownOutlined className="ml-1" />
+                  </Button>
+                </Dropdown>
+              )}
+            </div>
+          );
+        }
+
+        // Fallback for old single schedule format
         if (!record.day || !record.timeStart || !record.timeEnd) {
           return <span className="text-gray-400">Not scheduled</span>;
         }
@@ -394,28 +509,26 @@ const CourseManagement: React.FC = () => {
             {record.room && (
               <div className="text-xs text-blue-600">Room: {record.room}</div>
             )}
+            {record.instructor && (
+              <div className="text-xs text-green-600">
+                Instructor: {record.instructor}
+              </div>
+            )}
           </div>
         );
       },
       responsive: ["md", "lg", "xl"],
     },
-    {
-      title: "Instructor",
-      dataIndex: "instructor",
-      key: "instructor",
-      render: (instructor: string) => (
-        <span className="text-sm">
-          {instructor || <span className="text-gray-400">Not assigned</span>}
-        </span>
-      ),
-      responsive: ["md", "lg", "xl"],
-    },
+
     {
       title: "Semester",
       dataIndex: "semester",
       key: "semester",
-      render: (semester: string) => (
-        <Tag color="purple">{semester || "Not specified"}</Tag>
+      render: (semester: string, record: Course) => (
+        <Space wrap direction="vertical">
+          <Tag color="purple">{semester || "Not specified"}</Tag>
+          <Tag color="green">{record.yearLevel || "Not specified"}</Tag>
+        </Space>
       ),
       responsive: ["sm", "md", "lg", "xl"],
     },
@@ -643,7 +756,7 @@ const CourseManagement: React.FC = () => {
           <div className="border-t border-white/30 pt-4 mt-4">
             <h4 className=" font-semibold mb-4">Schedule & Capacity</h4>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <Form.Item
                 name="maxCapacity"
                 label="Max Capacity"
@@ -658,84 +771,166 @@ const CourseManagement: React.FC = () => {
                   placeholder="30"
                 />
               </Form.Item>
-              <Form.Item
-                name="day"
-                label="Day"
-                rules={[{ required: true, message: "Please select a day" }]}
-              >
-                <Select placeholder="Select day">
-                  <Option value="Monday">Monday</Option>
-                  <Option value="Tuesday">Tuesday</Option>
-                  <Option value="Wednesday">Wednesday</Option>
-                  <Option value="Thursday">Thursday</Option>
-                  <Option value="Friday">Friday</Option>
-                  <Option value="Saturday">Saturday</Option>
-                  <Option value="Sunday">Sunday</Option>
-                </Select>
-              </Form.Item>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Form.Item
-                name="timeStart"
-                label="Start Time"
-                rules={[
-                  { required: true, message: "Please select start time" },
-                ]}
-              >
-                <TimePicker
-                  format="hh:mm A"
-                  use12Hours
-                  placeholder="Select start time"
-                  className="w-full"
-                  minuteStep={15}
-                  showNow={false}
-                />
-              </Form.Item>
-              <Form.Item
-                name="timeEnd"
-                label="End Time"
-                rules={[{ required: true, message: "Please select end time" }]}
-              >
-                <TimePicker
-                  format="hh:mm A"
-                  use12Hours
-                  placeholder="Select end time"
-                  className="w-full"
-                  minuteStep={15}
-                  showNow={false}
-                />
-              </Form.Item>
-              <Form.Item name="room" label="Room">
-                <Input placeholder="e.g., Lab 201" />
-              </Form.Item>
-            </div>
+            {/* Dynamic Schedules */}
+            <Form.List name="schedules">
+              {(fields, { add, remove }) => (
+                <>
+                  <div className="flex justify-between items-center mb-4">
+                    <h5 className="text-sm font-medium">Schedules</h5>
+                    <Button
+                      type="dashed"
+                      onClick={() => add()}
+                      icon={<PlusOutlined />}
+                      size="small"
+                    >
+                      Add Schedule
+                    </Button>
+                  </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Instructor Dropdown */}
-              <Form.Item
-                name="instructor"
-                label="Instructor"
-                rules={[
-                  { required: true, message: "Please select an instructor" },
-                ]}
-              >
-                <Select
-                  placeholder="Select instructor"
-                  loading={loading}
-                  notFoundContent={
-                    loading ? <Spin size="small" /> : "No instructors found"
-                  }
-                  allowClear
-                >
-                  {instructors.map((inst) => (
-                    <Option key={inst.id} value={inst.name}>
-                      {inst.name}
-                    </Option>
+                  {fields.map(({ key, name, ...restField }) => (
+                    <div
+                      key={key}
+                      className="border border-white/20 rounded-lg p-4 mb-4 bg-black/40"
+                    >
+                      <div className="flex justify-between items-center mb-3">
+                        <span className="text-sm font-medium text-gray-300">
+                          Schedule {name + 1}
+                        </span>
+                        {fields.length > 1 && (
+                          <Button
+                            type="text"
+                            danger
+                            size="small"
+                            icon={<DeleteOutlined />}
+                            onClick={() => remove(name)}
+                          >
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Form.Item
+                          {...restField}
+                          name={[name, "day"]}
+                          label="Day"
+                          rules={[
+                            { required: true, message: "Please select a day" },
+                          ]}
+                        >
+                          <Select placeholder="Select day">
+                            <Option value="Monday">Monday</Option>
+                            <Option value="Tuesday">Tuesday</Option>
+                            <Option value="Wednesday">Wednesday</Option>
+                            <Option value="Thursday">Thursday</Option>
+                            <Option value="Friday">Friday</Option>
+                            <Option value="Saturday">Saturday</Option>
+                            <Option value="Sunday">Sunday</Option>
+                          </Select>
+                        </Form.Item>
+
+                        <Form.Item
+                          {...restField}
+                          name={[name, "room"]}
+                          label="Room"
+                        >
+                          <Input placeholder="e.g., Lab 201" />
+                        </Form.Item>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Form.Item
+                          {...restField}
+                          name={[name, "timeStart"]}
+                          label="Start Time"
+                          rules={[
+                            {
+                              required: true,
+                              message: "Please select start time",
+                            },
+                          ]}
+                        >
+                          <TimePicker
+                            format="hh:mm A"
+                            use12Hours
+                            placeholder="Select start time"
+                            className="w-full"
+                            minuteStep={15}
+                            showNow={false}
+                          />
+                        </Form.Item>
+
+                        <Form.Item
+                          {...restField}
+                          name={[name, "timeEnd"]}
+                          label="End Time"
+                          rules={[
+                            {
+                              required: true,
+                              message: "Please select end time",
+                            },
+                          ]}
+                        >
+                          <TimePicker
+                            format="hh:mm A"
+                            use12Hours
+                            placeholder="Select end time"
+                            className="w-full"
+                            minuteStep={15}
+                            showNow={false}
+                          />
+                        </Form.Item>
+                      </div>
+
+                      <Form.Item
+                        {...restField}
+                        name={[name, "instructor"]}
+                        label="Instructor"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please select an instructor",
+                          },
+                        ]}
+                      >
+                        <Select
+                          placeholder="Select instructor"
+                          loading={loading}
+                          notFoundContent={
+                            loading ? (
+                              <Spin size="small" />
+                            ) : (
+                              "No instructors found"
+                            )
+                          }
+                          allowClear
+                        >
+                          {instructors.map((inst) => (
+                            <Option key={inst.id} value={inst.name}>
+                              {inst.name}
+                            </Option>
+                          ))}
+                        </Select>
+                      </Form.Item>
+                    </div>
                   ))}
-                </Select>
-              </Form.Item>
 
+                  {fields.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <BookOutlined className="text-2xl mb-2" />
+                      <p>No schedules added yet</p>
+                      <p className="text-sm">
+                        Click "Add Schedule" to add the first schedule
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+            </Form.List>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Semester Dropdown */}
               <Form.Item
                 name="semester"
@@ -774,7 +969,25 @@ const CourseManagement: React.FC = () => {
 
       {/* View Course Modal */}
       <Modal
-        title="Course Details"
+        title={
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-blue-100 dark:bg-black rounded-lg flex items-center justify-center">
+              <span className="text-blue-600 dark:text-blue-400 font-bold text-sm">
+                📚
+              </span>
+            </div>
+            <div>
+              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Course Details
+              </div>
+              {viewingCourse && (
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {viewingCourse.courseCode} - {viewingCourse.courseName}
+                </div>
+              )}
+            </div>
+          </div>
+        }
         open={isCourseViewModalOpen}
         onCancel={() => {
           setIsCourseViewModalOpen(false);
@@ -783,61 +996,55 @@ const CourseManagement: React.FC = () => {
         footer={[
           <Button
             key="close"
+            type="primary"
             onClick={() => {
               setIsCourseViewModalOpen(false);
               setViewingCourse(null);
             }}
+            className="bg-blue-600 hover:bg-blue-700"
           >
             Close
           </Button>,
         ]}
-        width={800}
+        width={900}
+        className="course-details-modal"
       >
         {viewingCourse && (
           <div className="space-y-6">
             {/* Header Section */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-lg p-4 border border-blue-100 dark:border-gray-600">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-xl p-6 border border-blue-100 dark:border-gray-600">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-2">
                   <label className="block text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-2">
                     Course Code
                   </label>
-                  <div className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                     {viewingCourse.courseCode}
                   </div>
+                  <div className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                    {viewingCourse.courseName}
+                  </div>
                 </div>
-                <div className="flex items-center">
-                  <div>
+                <div className="flex items-center justify-center">
+                  <div className="text-center">
                     <label className="block text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-2">
                       Units
                     </label>
-                    <div className="text-base">
-                      <Badge
-                        count={viewingCourse.units}
-                        showZero
-                        color="blue"
-                        className="text-lg"
-                      />
+                    <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                      {viewingCourse.units}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Credit Hours
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Course Name Section */}
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2">
-                Course Name
-              </label>
-              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                {viewingCourse.courseName}
-              </div>
-            </div>
-
             {/* Description Section */}
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
               <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-3">
-                Description
+                📝 Description
               </label>
               <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed min-h-[60px]">
                 {viewingCourse.description || (
@@ -849,20 +1056,20 @@ const CourseManagement: React.FC = () => {
             </div>
 
             {/* Department & Prerequisites Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-700">
-                <label className="block text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide mb-2">
-                  Department
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-6 border border-green-200 dark:border-green-700">
+                <label className="block text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide mb-3">
+                  🏢 Department
                 </label>
                 <div>
-                  <Tag color="green" className="text-sm font-medium">
+                  <Tag color="green" className="text-sm font-medium px-3 py-1">
                     {viewingCourse.department}
                   </Tag>
                 </div>
               </div>
-              <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 border border-orange-200 dark:border-orange-700">
-                <label className="block text-xs font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wide mb-2">
-                  Prerequisites
+              <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-6 border border-orange-200 dark:border-orange-700">
+                <label className="block text-xs font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wide mb-3">
+                  📋 Prerequisites
                 </label>
                 <div className="min-h-[40px] flex items-center">
                   {viewingCourse.prerequisites &&
@@ -880,7 +1087,7 @@ const CourseManagement: React.FC = () => {
                                 ? `${match.courseCode} - ${match.courseName}`
                                 : pid
                             }
-                            className="font-medium"
+                            className="font-medium px-3 py-1"
                           >
                             {label}
                           </Tag>
@@ -896,109 +1103,193 @@ const CourseManagement: React.FC = () => {
               </div>
             </div>
 
-            {/* Schedule & Capacity Section */}
-            <div className="bg-cyan-50 dark:bg-cyan-900/20 rounded-lg p-4 border border-cyan-200 dark:border-cyan-700">
-              <label className="block text-xs font-semibold text-cyan-600 dark:text-cyan-400 uppercase tracking-wide mb-3">
-                🕒 Schedule & Capacity
-              </label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        Day:
-                      </span>
-                      <Tag color="blue" className="font-medium">
-                        {viewingCourse.day || "Not scheduled"}
-                      </Tag>
+            {/* Schedules Section */}
+            {viewingCourse.schedules && viewingCourse.schedules.length > 0 && (
+              <div className="bg-cyan-50 dark:bg-cyan-900/20 rounded-xl p-6 border border-cyan-200 dark:border-cyan-700">
+                <label className="block text-xs font-semibold text-cyan-600 dark:text-cyan-400 uppercase tracking-wide mb-4">
+                  🕒 Class Schedules
+                </label>
+                <div className="space-y-3">
+                  {viewingCourse.schedules.map((schedule, index) => (
+                    <div
+                      key={index}
+                      className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-cyan-100 dark:border-cyan-800"
+                    >
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                            Day:
+                          </span>
+                          <Tag color="blue" className="font-medium">
+                            {schedule.day}
+                          </Tag>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                            Time:
+                          </span>
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {schedule.timeStart} - {schedule.timeEnd}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                            Room:
+                          </span>
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {schedule.room}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                            Instructor:
+                          </span>
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {schedule.instructor}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        Time:
-                      </span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {viewingCourse.timeStart && viewingCourse.timeEnd
-                          ? `${viewingCourse.timeStart} - ${viewingCourse.timeEnd}`
-                          : "Not scheduled"}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        Room:
-                      </span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {viewingCourse.room || "Not assigned"}
-                      </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Legacy Schedule & Capacity Section (for backward compatibility) */}
+            {(!viewingCourse.schedules ||
+              viewingCourse.schedules.length === 0) && (
+              <div className="bg-cyan-50 dark:bg-cyan-900/20 rounded-xl p-6 border border-cyan-200 dark:border-cyan-700">
+                <label className="block text-xs font-semibold text-cyan-600 dark:text-cyan-400 uppercase tracking-wide mb-3">
+                  🕒 Schedule & Capacity
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Day:
+                        </span>
+                        <Tag color="blue" className="font-medium">
+                          {viewingCourse.day || "Not scheduled"}
+                        </Tag>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Time:
+                        </span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {viewingCourse.timeStart && viewingCourse.timeEnd
+                            ? `${viewingCourse.timeStart} - ${viewingCourse.timeEnd}`
+                            : "Not scheduled"}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Room:
+                        </span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {viewingCourse.room || "Not assigned"}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        Max Capacity:
-                      </span>
-                      <Badge
-                        count={viewingCourse.maxCapacity || 0}
-                        showZero
-                        color="orange"
-                        size="small"
-                      />
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        Instructor:
-                      </span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {viewingCourse.instructor || "Not assigned"}
-                      </span>
+                  <div>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Max Capacity:
+                        </span>
+                        <Badge
+                          count={viewingCourse.maxCapacity || 0}
+                          showZero
+                          color="orange"
+                          size="small"
+                        />
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Instructor:
+                        </span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {viewingCourse.instructor || "Not assigned"}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Academic Information Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
-                <label className="block text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide mb-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-6 border border-purple-200 dark:border-purple-700">
+                <label className="block text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide mb-3">
                   📅 Semester
                 </label>
                 <div>
-                  <Tag color="purple" className="text-sm font-medium">
+                  <Tag color="purple" className="text-sm font-medium px-3 py-1">
                     {viewingCourse.semester || "Not specified"}
                   </Tag>
                 </div>
               </div>
-              <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-4 border border-indigo-200 dark:border-indigo-700">
-                <label className="block text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide mb-2">
+              <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-6 border border-indigo-200 dark:border-indigo-700">
+                <label className="block text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide mb-3">
                   🎓 Year Level
                 </label>
                 <div>
-                  <Tag color="indigo" className="text-sm font-medium">
+                  <Tag color="indigo" className="text-sm font-medium px-3 py-1">
                     {viewingCourse.yearLevel || "Not specified"}
                   </Tag>
                 </div>
               </div>
             </div>
 
-            {/* Metadata Section */}
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Status Section */}
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                    📅 Date Created
+                  <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                    📊 Status
                   </label>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                    {new Date(viewingCourse.dateCreated).toLocaleDateString()}
+                  <div>
+                    <Tag
+                      color={
+                        viewingCourse.status === "Active" ? "green" : "red"
+                      }
+                      className="text-sm font-medium px-3 py-1"
+                    >
+                      {viewingCourse.status || "Unknown"}
+                    </Tag>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                  <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                    📅 Date Created
+                  </label>
+                  <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                    {new Date(viewingCourse.dateCreated).toLocaleDateString(
+                      "en-US",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      }
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                     🔄 Last Updated
                   </label>
                   <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                    {new Date(viewingCourse.dateUpdated).toLocaleDateString()}
+                    {new Date(viewingCourse.dateUpdated).toLocaleDateString(
+                      "en-US",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      }
+                    )}
                   </div>
                 </div>
               </div>

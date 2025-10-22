@@ -67,7 +67,7 @@ const UserDropdown: React.FC = () => {
     >
       <div className="cursor-pointer flex items-center gap-2">
         <Avatar size="large" icon={<UserOutlined />} />
-        <span className="text-gray-300">Enrollment Officer</span>
+        <span className="text-gray-300 text-sm">Enrollment Officer</span>
       </div>
     </Dropdown>
   );

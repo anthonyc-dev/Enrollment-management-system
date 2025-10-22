@@ -48,6 +48,9 @@ const StudentEnrollmentComponent: React.FC = () => {
     useState<string>("");
   const [courseYearLevelFilter, setCourseYearLevelFilter] =
     useState<string>("");
+  const [coursesModalVisible, setCoursesModalVisible] = useState(false);
+  const [selectedRecordForCourses, setSelectedRecordForCourses] =
+    useState<StudentEnrollment | null>(null);
 
   // Selection states
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -898,18 +901,11 @@ const StudentEnrollmentComponent: React.FC = () => {
       render: (_, record) => {
         console.log("Rendering courses for record:", record.id, record);
 
-        // Normalize record fields
-        const recordAny = record as unknown as Record<string, unknown>;
-        let courseCodes =
-          record.selectedCourses ||
-          recordAny.courses ||
-          record.courseCode ||
-          [];
+        // Get course codes from selectedCourses (which comes from prerequisites array)
+        let courseCodes = record.selectedCourses || [];
 
-        // Normalize courseCodes into an array
-        if (typeof courseCodes === "string") {
-          courseCodes = [courseCodes];
-        } else if (!Array.isArray(courseCodes)) {
+        // Ensure courseCodes is an array
+        if (!Array.isArray(courseCodes)) {
           courseCodes = [];
         }
 
@@ -927,48 +923,29 @@ const StudentEnrollmentComponent: React.FC = () => {
           return <Tag color="default">No courses</Tag>;
         }
 
-        // ✅ Regex that supports flexible course codes:
-        // Examples: GEC 7, CC102, CC 109, MS102, MS 120, IT301A
-        const COURSE_CODE_REGEX = /^([A-Z]{2,5}\s*\d{1,3}[A-Z0-9]*)/i;
+        // Show only first course with +X more indicator
+        const firstCourse = courseCodes[0]?.trim();
+        const remainingCount = courseCodes.length - 1;
+
+        // Note: match variable removed as it's not used in the simplified display
 
         return (
-          <div style={{ maxHeight: 100, overflowY: "auto" }}>
-            <Space wrap>
-              {courseCodes.map((courseItem, index) => {
-                let courseCode = "";
-
-                if (typeof courseItem === "string") {
-                  const match = courseItem.match(COURSE_CODE_REGEX);
-                  courseCode = match
-                    ? match[1].replace(/\s+/, " ").trim() // normalize spaces
-                    : courseItem.split(" - ")[0]?.trim() || courseItem;
-                }
-
-                // Try to find matching course for tooltip
-                const match = (courses || []).find(
-                  (c) =>
-                    c.courseCode?.toUpperCase().replace(/\s+/g, "") ===
-                      courseCode.toUpperCase().replace(/\s+/g, "") ||
-                    c.id === courseCode
-                );
-
-                const label = match?.courseCode || courseCode;
-
-                return (
-                  <Tag
-                    key={index}
-                    color="purple"
-                    className="text-xs"
-                    title={
-                      match
-                        ? `${match.courseCode} - ${match.courseName}`
-                        : courseCode
-                    }
-                  >
-                    {label}
-                  </Tag>
-                );
-              })}
+          <div
+            className="cursor-pointer hover:bg-black/50 p-1 rounded"
+            onClick={() => {
+              setSelectedRecordForCourses(record);
+              setCoursesModalVisible(true);
+            }}
+          >
+            <Space>
+              <Tag color="purple" className="text-xs">
+                {firstCourse}
+              </Tag>
+              {remainingCount > 0 && (
+                <span className="text-xs text-gray-500 hover:text-blue-500">
+                  +{remainingCount} more
+                </span>
+              )}
             </Space>
           </div>
         );
@@ -999,7 +976,9 @@ const StudentEnrollmentComponent: React.FC = () => {
             totalUnits = courses.reduce((total, courseString) => {
               if (typeof courseString === "string") {
                 // Extract units from course string format: "CS201 - Data Structures and Algorithms (3 units)"
-                const unitsMatch = courseString.match(/\((\d+)\s+units?\)/);
+                const unitsMatch = courseString.match(
+                  /^([A-Za-z]+(?:\s+[A-Za-z]+)*(?:\s*\d{1,3}[A-Za-z0-9-]*)?)$/
+                );
                 return total + (unitsMatch ? parseInt(unitsMatch[1], 10) : 0);
               }
               return total;
@@ -1147,7 +1126,7 @@ const StudentEnrollmentComponent: React.FC = () => {
           >
             Refresh
           </Button>
-          <Button
+          {/* <Button
             type="dashed"
             onClick={() => {
               console.log("=== API ENDPOINTS USED ===");
@@ -1162,7 +1141,7 @@ const StudentEnrollmentComponent: React.FC = () => {
             }}
           >
             Show API Info
-          </Button>
+          </Button> */}
         </div>
       </div>
 
@@ -1193,7 +1172,7 @@ const StudentEnrollmentComponent: React.FC = () => {
                   0
                 )}
               </Tag>
-              <Button
+              {/* <Button
                 size="small"
                 icon={<ReloadOutlined />}
                 onClick={fetchStudentEnrollments}
@@ -1234,7 +1213,7 @@ const StudentEnrollmentComponent: React.FC = () => {
                 type="text"
               >
                 Debug Table
-              </Button>
+              </Button> */}
             </div>
           </div>
         }
@@ -1695,18 +1674,27 @@ const StudentEnrollmentComponent: React.FC = () => {
                 {viewingStudentEnrollment.selectedCourses &&
                 viewingStudentEnrollment.selectedCourses.length > 0 ? (
                   viewingStudentEnrollment.selectedCourses.map(
-                    (courseString, index) => {
-                      const courseCode = courseString.trim().toUpperCase();
+                    (courseCode, index) => {
+                      // courseCode is already a string from prerequisites array
+                      const trimmedCode = courseCode.trim();
 
                       // Find matching course data
                       const match = courses?.find(
                         (c) =>
-                          c.courseCode.toUpperCase() === courseCode ||
-                          c.id?.toString() === courseCode
+                          c.courseCode?.toUpperCase().replace(/\s+/g, "") ===
+                            trimmedCode.toUpperCase().replace(/\s+/g, "") ||
+                          c.id?.toString() === trimmedCode ||
+                          c.courseCode?.toUpperCase() ===
+                            trimmedCode.toUpperCase()
                       );
 
-                      const courseName = match?.courseName || "Unknown Course";
-                      const units = match?.units || 0;
+                      // Use course data from match if available
+                      const finalCourseName =
+                        match?.courseName || "Course details not available";
+                      const finalUnits = match?.units || 0;
+                      const schedules = Array.isArray(match?.schedules)
+                        ? match?.schedules
+                        : [];
                       const day = match?.day || "N/A";
                       const timeStart = match?.timeStart || "N/A";
                       const timeEnd = match?.timeEnd || "N/A";
@@ -1722,30 +1710,62 @@ const StudentEnrollmentComponent: React.FC = () => {
                           <div className="flex justify-between items-center">
                             <div>
                               <div className="font-semibold text-blue-400">
-                                {courseCode}
+                                {trimmedCode}
                               </div>
                               <div className="text-sm text-gray-400">
-                                {courseName}
+                                {finalCourseName}
                               </div>
                             </div>
-                            <Tag color="blue">{units} units</Tag>
+                            <Tag color="blue">{finalUnits} units</Tag>
                           </div>
 
                           {/* Schedule Details */}
-                          <div className="text-xs text-gray-400 border-t border-gray-800 pt-2">
-                            <div>
-                              <strong>Day:</strong> {day}
+                          {schedules && schedules.length > 0 ? (
+                            <div className="text-xs text-gray-400 border-t border-gray-800 pt-2 space-y-2">
+                              <p className="font-medium text-yellow-400">
+                                Schedules:
+                              </p>
+                              {schedules.map((s, i) => (
+                                <div
+                                  key={i}
+                                  className="flex flex-wrap gap-x-4 gap-y-1"
+                                >
+                                  <div>
+                                    <strong>Day:</strong> {s.day || "N/A"}
+                                  </div>
+                                  <div>
+                                    <strong>Time:</strong>{" "}
+                                    {s.timeStart || "N/A"} -{" "}
+                                    {s.timeEnd || "N/A"}
+                                  </div>
+                                  <div>
+                                    <strong>Room:</strong> {s.room || "N/A"}
+                                  </div>
+                                  {s.instructor && (
+                                    <div>
+                                      <strong>Instructor:</strong>{" "}
+                                      {s.instructor}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
                             </div>
-                            <div>
-                              <strong>Time:</strong> {timeStart} - {timeEnd}
+                          ) : (
+                            <div className="text-xs text-gray-400 border-t border-gray-800 pt-2">
+                              <div>
+                                <strong>Day:</strong> {day}
+                              </div>
+                              <div>
+                                <strong>Time:</strong> {timeStart} - {timeEnd}
+                              </div>
+                              <div>
+                                <strong>Room:</strong> {room}
+                              </div>
+                              <div>
+                                <strong>Instructor:</strong> {instructor}
+                              </div>
                             </div>
-                            <div>
-                              <strong>Room:</strong> {room}
-                            </div>
-                            <div>
-                              <strong>Instructor:</strong> {instructor}
-                            </div>
-                          </div>
+                          )}
                         </div>
                       );
                     }
@@ -2087,6 +2107,87 @@ const StudentEnrollmentComponent: React.FC = () => {
             </div>
           </div>
         </div>
+      </Modal>
+
+      {/* Courses Modal */}
+      <Modal
+        title={
+          <div className="flex items-center gap-2">
+            <BookOutlined />
+            <span>Enrolled Courses</span>
+          </div>
+        }
+        open={coursesModalVisible}
+        onCancel={() => setCoursesModalVisible(false)}
+        footer={[
+          <Button key="close" onClick={() => setCoursesModalVisible(false)}>
+            Close
+          </Button>,
+        ]}
+        width={600}
+      >
+        {selectedRecordForCourses && (
+          <div>
+            <div className="mb-4 p-3 bg-black/50 rounded-lg">
+              <div className="font-medium text-gray-300">
+                Student: {selectedRecordForCourses.firstName}{" "}
+                {selectedRecordForCourses.lastName}
+              </div>
+              <div className="text-sm text-gray-400">
+                Semester: {selectedRecordForCourses.semester}{" "}
+                {selectedRecordForCourses.academicYear}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="font-medium text-gray-300">Enrolled Courses:</h4>
+              {(selectedRecordForCourses.selectedCourses || []).map(
+                (courseCode, index) => {
+                  const trimmedCode = courseCode.trim();
+
+                  // Try to find matching course for additional info
+                  const match = (courses || []).find(
+                    (c) =>
+                      c.courseCode?.toUpperCase().replace(/\s+/g, "") ===
+                        trimmedCode.toUpperCase().replace(/\s+/g, "") ||
+                      c.id === trimmedCode ||
+                      c.courseCode?.toUpperCase() === trimmedCode.toUpperCase()
+                  );
+
+                  return (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-black/50  rounded-lg"
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium text-blue-900">
+                          {match?.courseCode || trimmedCode}
+                        </div>
+                        {match?.courseName && (
+                          <div className="text-sm text-blue-700">
+                            {match.courseName}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <Tag color="blue" className="font-medium">
+                          {match?.units || 0} units
+                        </Tag>
+                      </div>
+                    </div>
+                  );
+                }
+              )}
+
+              {(selectedRecordForCourses.selectedCourses || []).length ===
+                0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No courses enrolled
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

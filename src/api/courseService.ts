@@ -34,6 +34,21 @@ const getStringArray = (r: Raw, key: string): string[] => {
 function normalizeCourse(rawUnknown: unknown): Course {
   const raw = asRaw(rawUnknown) ?? {};
   const id = getString(raw, "id") || getString(raw, "_id");
+
+  // Handle schedules array
+  const schedules = Array.isArray(raw["schedules"])
+    ? (raw["schedules"] as unknown[]).map((s) => {
+        const rs = asRaw(s) ?? {};
+        return {
+          day: getString(rs, "day"),
+          timeStart: getString(rs, "timeStart"),
+          timeEnd: getString(rs, "timeEnd"),
+          room: getString(rs, "room"),
+          instructor: getString(rs, "instructor"),
+        };
+      })
+    : undefined;
+
   return {
     id,
     courseCode: getString(raw, "courseCode", "-"),
@@ -52,6 +67,7 @@ function normalizeCourse(rawUnknown: unknown): Course {
     instructor: getString(raw, "instructor") || undefined,
     semester: getString(raw, "semester") || undefined,
     yearLevel: getString(raw, "yearLevel") || undefined,
+    schedules: schedules,
 
     status: (getString(raw, "status") as "Active" | "Inactive") || undefined,
     dateCreated:
@@ -262,10 +278,17 @@ export const enrollmentManagementService = {
       const rawData = asRaw(raw) ?? {};
       const enrollment: StudentEnrollment = {
         id: getString(rawData, "id") || getString(rawData, "_id"),
-        firstName: getString(rawData, "firstName") || getString(rawData, "studentName") || getString(rawData, "name") || "",
+        firstName:
+          getString(rawData, "firstName") ||
+          getString(rawData, "studentName") ||
+          getString(rawData, "name") ||
+          "",
         lastName: getString(rawData, "lastName") || "",
         middleName: getString(rawData, "middleName"),
-        email: getString(rawData, "email") || getString(rawData, "studentEmail") || "",
+        email:
+          getString(rawData, "email") ||
+          getString(rawData, "studentEmail") ||
+          "",
         courseCode: getString(rawData, "courseCode") || "",
         courseName: getString(rawData, "courseName") || "",
         studentNumber: getString(rawData, "studentNumber") || undefined,
@@ -358,10 +381,15 @@ export const enrollmentManagementService = {
 
           const enrollment = {
             id: getString(raw, "id") || getString(raw, "_id"),
-            firstName: getString(raw, "firstName") || getString(raw, "studentName") || getString(raw, "name") || "",
+            firstName:
+              getString(raw, "firstName") ||
+              getString(raw, "studentName") ||
+              getString(raw, "name") ||
+              "",
             lastName: getString(raw, "lastName") || "",
             middleName: getString(raw, "middleName"),
-            email: getString(raw, "email") || getString(raw, "studentEmail") || "",
+            email:
+              getString(raw, "email") || getString(raw, "studentEmail") || "",
             courseCode: getString(raw, "courseCode") || "",
             courseName: getString(raw, "courseName") || "",
             studentNumber: getString(raw, "studentNumber") || undefined,
@@ -450,10 +478,17 @@ export const enrollmentManagementService = {
       const rawData = asRaw(raw) ?? {};
       const enrollment: StudentEnrollment = {
         id: getString(rawData, "id") || getString(rawData, "_id"),
-        firstName: getString(rawData, "firstName") || getString(rawData, "studentName") || getString(rawData, "name") || "",
+        firstName:
+          getString(rawData, "firstName") ||
+          getString(rawData, "studentName") ||
+          getString(rawData, "name") ||
+          "",
         lastName: getString(rawData, "lastName") || "",
         middleName: getString(rawData, "middleName"),
-        email: getString(rawData, "email") || getString(rawData, "studentEmail") || "",
+        email:
+          getString(rawData, "email") ||
+          getString(rawData, "studentEmail") ||
+          "",
         courseCode: getString(rawData, "courseCode") || "",
         courseName: getString(rawData, "courseName") || "",
         studentNumber: getString(rawData, "studentNumber") || undefined,
@@ -530,7 +565,11 @@ export const enrollmentManagementService = {
       const raw = asRaw(enrollmentData) ?? {};
       const enrollment: StudentEnrollment = {
         id: getString(raw, "id") || getString(raw, "_id"),
-        firstName: getString(raw, "firstName") || getString(raw, "studentName") || getString(raw, "name") || "",
+        firstName:
+          getString(raw, "firstName") ||
+          getString(raw, "studentName") ||
+          getString(raw, "name") ||
+          "",
         lastName: getString(raw, "lastName") || "",
         middleName: getString(raw, "middleName"),
         email: getString(raw, "email") || getString(raw, "studentEmail") || "",
