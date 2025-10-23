@@ -55,7 +55,7 @@ function normalizeCourse(rawUnknown: unknown): Course {
     courseName: getString(raw, "courseName", "-"),
     description: (raw["description"] as string) ?? "",
     units: getNumber(raw, "units", 0),
-    department: getString(raw, "department", ""),
+    departments: getStringArray(raw, "departments"),
     prerequisites: getStringArray(raw, "prerequisites"),
 
     // Section-specific fields

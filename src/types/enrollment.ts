@@ -26,7 +26,7 @@ export interface Course {
   courseName: string;
   description?: string;
   units: number;
-  department: string;
+  departments: string[];
   prerequisites?: string[];
 
   // Section-specific fields
@@ -79,7 +79,8 @@ export interface Section {
   }[];
   maxCapacity: number;
   currentEnrollment: number;
-  department?: string;
+  department: string;
+  yearLevel?: string;
   semesterId: string;
   status: "Open" | "Closed" | "Cancelled";
   dateCreated: string;
@@ -183,7 +184,7 @@ export interface CreateCourseForm {
   courseName: string;
   description?: string;
   units: number;
-  department: string;
+  departments: string[];
   prerequisites?: string[];
 
   // Section-specific fields

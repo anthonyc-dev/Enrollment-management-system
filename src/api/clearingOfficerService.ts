@@ -1,7 +1,7 @@
 import type { ClearingOfficer } from "@/types/enrollment";
 import axiosInstance from "./axios";
 
-const API_BASE_URL = "/auth";
+const API_BASE_URL = "/co";
 
 export const clearingOfficerService = {
   // 🔹 Get all clearing officers

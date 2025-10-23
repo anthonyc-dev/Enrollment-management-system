@@ -8,15 +8,17 @@ export const departments = [
   "Bachelor of Science in Criminology",
   "Bachelor of Science in Social Work",
   "Bachelor of Science in Accountancy",
+  "PARAMED",
   "Bachelor of Science in Midwifery",
   "Bachelor of Science in Medical Technology",
   "Bachelor of Science in Nursing",
   "Bachelor of Science in Business Administration",
   "Bachelor of Elementary Education",
   "Bachelor of Arts in Political Science",
+  "CEDCAS",
   "Bachelor in Secondary Education Major in Mathematics",
   "Bachelor in Secondary Education Major in Science",
-  "Bachelor in Secondary Education Major in Filipino",
+  "Bachelor in Secondary Education Major in English",
   "All Departments",
 ];
 
@@ -44,7 +46,7 @@ export const programs = [
   "AB PolSci",
   "BSEd-Math",
   "BSEd-Sci",
-  "BSEd-Fil",
+  "BSEd-English",
 ];
 
 export const semesters = [

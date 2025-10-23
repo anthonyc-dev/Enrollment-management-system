@@ -122,7 +122,7 @@ const CourseManagement: React.FC = () => {
       course.description?.toLowerCase().includes(searchText.toLowerCase());
 
     const matchesFilters =
-      !filters.department || course.department === filters.department;
+      !filters.department || course.departments.includes(filters.department);
 
     return matchesSearch && matchesFilters;
   });
@@ -143,6 +143,7 @@ const CourseManagement: React.FC = () => {
         maxCapacity: 30,
         semester: "1st Semester",
         yearLevel: "1st Year",
+        departments: [], // Initialize with empty departments array
         schedules: [], // Initialize with empty schedules array
       });
     }, 0);
@@ -210,6 +211,7 @@ const CourseManagement: React.FC = () => {
       const values = await courseForm.validateFields();
 
       console.log("Form values:", values);
+      console.log("Departments from form:", values.departments);
 
       // Validate schedules if provided
       if (values.schedules && values.schedules.length > 0) {
@@ -236,7 +238,9 @@ const CourseManagement: React.FC = () => {
           courseName: values.courseName?.trim(),
           description: values.description?.trim() || "",
           units: Number(values.units),
-          department: values.department,
+          departments: Array.isArray(values.departments)
+            ? values.departments
+            : [],
           prerequisites: Array.isArray(values.prerequisites)
             ? values.prerequisites
             : [],
@@ -279,7 +283,9 @@ const CourseManagement: React.FC = () => {
           courseName: values.courseName?.trim(),
           description: values.description?.trim() || "",
           units: Number(values.units),
-          department: values.department,
+          departments: Array.isArray(values.departments)
+            ? values.departments
+            : [],
           prerequisites: Array.isArray(values.prerequisites)
             ? values.prerequisites
             : [],
@@ -393,10 +399,66 @@ const CourseManagement: React.FC = () => {
       responsive: ["md", "lg", "xl"],
     },
     {
-      title: "Department",
-      dataIndex: "department",
-      key: "department",
-      render: (department: string) => <Tag color="green">{department}</Tag>,
+      title: "Departments",
+      dataIndex: "departments",
+      key: "departments",
+      render: (departments: string[]) => {
+        if (!departments || departments.length === 0) {
+          return <span className="text-gray-400">None</span>;
+        }
+
+        // Get the first department to display
+        const firstDept = departments[0];
+        const firstMatch = (courses || []).find((d) => d.id === firstDept);
+        const firstLabel = firstMatch?.courseCode || firstDept;
+
+        // If there's only one department, show it directly
+        if (departments.length === 1) {
+          return (
+            <Tag
+              color="orange"
+              title={
+                firstMatch
+                  ? `${firstMatch.courseCode} - ${firstMatch.courseName}`
+                  : firstDept
+              }
+            >
+              {firstLabel}
+            </Tag>
+          );
+        }
+
+        // Create dropdown menu for multiple departments
+        const dropdownMenu = {
+          items: departments.map((dept) => {
+            const match = (courses || []).find((d) => d.id === dept);
+            const label = match?.courseCode || dept;
+            return {
+              key: dept,
+              label: (
+                <div className="flex items-center gap-2">
+                  <Tag color="orange">{label}</Tag>
+                  <span className="text-sm text-gray-400">
+                    {match ? match.courseName : dept}
+                  </span>
+                </div>
+              ),
+            };
+          }),
+        };
+
+        return (
+          <div className="flex items-center gap-1 cursor-pointer  p-1 rounded">
+            <Tag color="orange">{firstLabel}</Tag>
+            <Dropdown menu={dropdownMenu} trigger={["click"]}>
+              <span className="text-xs text-gray-500 hover:text-gray-50">
+                +{departments.length - 1} more{" "}
+                <DownOutlined className="text-xs  text-gray-400" />
+              </span>
+            </Dropdown>
+          </div>
+        );
+      },
       responsive: ["sm", "md", "lg", "xl"],
     },
     {
@@ -725,11 +787,15 @@ const CourseManagement: React.FC = () => {
           </Form.Item>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Form.Item
-              name="department"
-              label="Department"
-              rules={[{ required: true, message: "Please select department" }]}
+              name="departments"
+              label="Departments"
+              rules={[{ required: true, message: "Please select departments" }]}
             >
-              <Select placeholder="Select department">
+              <Select
+                mode="multiple"
+                placeholder="Select departments"
+                allowClear
+              >
                 {departments.map((dept) => (
                   <Option key={dept} value={dept}>
                     {dept}
@@ -1062,9 +1128,24 @@ const CourseManagement: React.FC = () => {
                   🏢 Department
                 </label>
                 <div>
-                  <Tag color="green" className="text-sm font-medium px-3 py-1">
-                    {viewingCourse.department}
-                  </Tag>
+                  <Space direction="vertical">
+                    {Array.isArray(viewingCourse.departments) &&
+                    viewingCourse.departments.length > 0 ? (
+                      viewingCourse.departments.map((dept, index) => (
+                        <Tag
+                          key={index}
+                          color="green"
+                          className="text-sm font-medium px-3 py-1"
+                        >
+                          {dept}
+                        </Tag>
+                      ))
+                    ) : (
+                      <span className="text-gray-500 italic">
+                        No department assigned
+                      </span>
+                    )}
+                  </Space>
                 </div>
               </div>
               <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-6 border border-orange-200 dark:border-orange-700">

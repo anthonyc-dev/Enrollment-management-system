@@ -1,7 +1,7 @@
 import axiosInstance from "./axios";
 
 // Base API URL
-const API_BASE_URL = "/auth";
+const API_BASE_URL = "/co";
 
 // Interface for clearing officer response (only firstName and lastName)
 export interface ClearingOfficer {
@@ -32,9 +32,7 @@ export const clearingOfficerService = {
    */
   getAllClearingOfficers: async (): Promise<ClearingOfficer[]> => {
     try {
-      const response = await axiosInstance.get(
-        `${API_BASE_URL}/getAllCoInASCS`
-      );
+      const response = await axiosInstance.get(`${API_BASE_URL}/getAllCo`);
 
       // Handle different response formats
       let data: ClearingOfficerFullData[];
@@ -65,7 +63,7 @@ export const clearingOfficerService = {
   getClearingOfficerById: async (id: string): Promise<ClearingOfficer> => {
     try {
       const response = await axiosInstance.get(
-        `${API_BASE_URL}/clearing-officers/${id}`
+        `${API_BASE_URL}/getCoById/${id}`
       );
 
       let data: ClearingOfficerFullData;
