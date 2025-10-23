@@ -308,9 +308,7 @@ const StudentEnrollmentComponent: React.FC = () => {
   });
 
   const uniqueCourseDepartments = Array.from(
-    new Set(
-      (courses || []).filter((c) => c?.department).map((c) => c.department)
-    )
+    new Set((courses || []).flatMap((c) => c?.departments || []))
   );
 
   // Infer recommended year level from course code number (e.g., 101 -> 1st Year)
@@ -347,7 +345,8 @@ const StudentEnrollmentComponent: React.FC = () => {
 
     // Department filter
     const matchesDepartment =
-      !courseDepartmentFilter || course.department === courseDepartmentFilter;
+      !courseDepartmentFilter ||
+      course.departments.includes(courseDepartmentFilter);
 
     // Year level filter based on course code (e.g., 101 -> 1st Year)
     const courseYearLevel = course.courseCode
@@ -375,7 +374,7 @@ const StudentEnrollmentComponent: React.FC = () => {
     // Department filter
     const matchesDepartment =
       !editCourseDepartmentFilter ||
-      course.department === editCourseDepartmentFilter;
+      course.departments.includes(editCourseDepartmentFilter);
 
     // Year level filter based on course code (e.g., 101 -> 1st Year)
     const courseYearLevel = course.courseCode
@@ -735,7 +734,24 @@ const StudentEnrollmentComponent: React.FC = () => {
     {
       title: "Department",
       key: "department",
-      render: (_, record) => <Tag color="green">{record.department}</Tag>,
+      render: (_, record) => (
+        <Space direction="vertical">
+          {Array.isArray(record.departments) &&
+          record.departments.length > 0 ? (
+            record.departments.map((dept, index) => (
+              <Tag
+                key={index}
+                color="green"
+                className="text-sm font-medium px-3 py-1"
+              >
+                {dept}
+              </Tag>
+            ))
+          ) : (
+            <span className="text-gray-500 italic">No department assigned</span>
+          )}
+        </Space>
+      ),
     },
     {
       title: "Prerequisites",
@@ -821,7 +837,9 @@ const StudentEnrollmentComponent: React.FC = () => {
     {
       title: "Department",
       key: "department",
-      render: (_, record) => <Tag color="green">{record.department}</Tag>,
+      render: (_, record) => (
+        <Tag color="green">{record.departments.join(", ")}</Tag>
+      ),
     },
     {
       title: "Actions",

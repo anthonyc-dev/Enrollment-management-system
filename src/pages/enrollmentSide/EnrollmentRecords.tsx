@@ -116,10 +116,11 @@ const EnrollmentRecords: React.FC = () => {
                 courseCode,
                 courseName,
                 units,
-                department: studentEnrollment.department,
+                departments: [studentEnrollment.department],
                 dateCreated: studentEnrollment.createdAt,
                 dateUpdated: studentEnrollment.createdAt,
               },
+              department: studentEnrollment.department,
               maxCapacity: 30,
               currentEnrollment: 1,
               semesterId: semester?.id || "unknown",
@@ -866,7 +867,7 @@ const EnrollmentRecords: React.FC = () => {
                             </div>
                             <div className="text-xs text-gray-400">
                               {enrolledSection.section.course.units} units •{" "}
-                              {enrolledSection.section.course.department}
+                              {enrolledSection.section.course.departments}
                             </div>
                           </div>
                           <div className="text-right">
