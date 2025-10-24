@@ -3,7 +3,7 @@ import type { ClearingOfficer } from "../api/co";
 
 export const departments = [
   "Bachelor of Science in Hospitality Management",
-  "Civil Engineering and Computer Science",
+  "Electrical Engineering and Computer Science",
   "Bachelor of Science in Electrical Engineering",
   "Bachelor of Science in Criminology",
   "Bachelor of Science in Social Work",

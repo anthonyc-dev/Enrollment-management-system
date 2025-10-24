@@ -4,13 +4,13 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000",
   timeout: 10000,
-  withCredentials: true, // Include cookies in requests
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Request interceptor: Attach access token automatically
+// Request interceptor: Attach access token automatically | All requests automatically include the token:
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("accessToken");
