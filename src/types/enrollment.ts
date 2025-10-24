@@ -351,6 +351,7 @@ export interface EnrollmentStats {
   totalStudents: number;
   totalCourses: number;
   totalSections: number;
+  totalClearingOfficers: number;
   activeEnrollments: number;
   enrollmentByDepartment: {
     department: string;

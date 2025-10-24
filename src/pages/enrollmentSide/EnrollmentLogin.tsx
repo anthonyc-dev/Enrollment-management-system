@@ -8,7 +8,7 @@ import { loginSchema, type LoginData } from "../../lib/validation";
 import FormInput from "../../components/myUi/auth/FormInput";
 import AuthButton from "../../components/myUi/auth/AuthButton";
 import StatusModal from "../../components/myUi/auth/StatusModal";
-import axiosInstance from "@/api/axios";
+import axiosInstance from "../../api/axios";
 import type { AxiosError } from "axios";
 import axios from "axios";
 
