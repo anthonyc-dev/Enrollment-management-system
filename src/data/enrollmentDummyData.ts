@@ -2053,6 +2053,7 @@ export const dummyEnrollmentStats: EnrollmentStats = {
   totalStudents: 10,
   totalCourses: 27,
   totalSections: 24,
+  totalClearingOfficers: 5,
   activeEnrollments: 37,
   enrollmentByDepartment: [
     { department: "BS Computer Science", count: 6 },
