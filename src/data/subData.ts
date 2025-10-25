@@ -1,5 +1,7 @@
+import type { Semester } from "@/types/enrollment";
 import { clearingOfficerService } from "../api/co";
 import type { ClearingOfficer } from "../api/co";
+import { semesterService } from "@/api/semesterService";
 
 export const departments = [
   "Bachelor of Science in Hospitality Management",
@@ -82,6 +84,17 @@ export const getClearingOfficersAsInstructors = async (): Promise<
     }));
   } catch (error) {
     console.error("Error fetching clearing officers:", error);
+    // Return empty array or fallback data if API fails
+    return [];
+  }
+};
+
+export const getSemesters = async (): Promise<Semester[]> => {
+  try {
+    const semesters = await semesterService.getAllSemesters();
+    return semesters;
+  } catch (error) {
+    console.error("Error fetching semesters:", error);
     // Return empty array or fallback data if API fails
     return [];
   }

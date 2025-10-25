@@ -29,11 +29,15 @@ import {
 import { type ColumnsType } from "antd/es/table";
 import { AxiosError } from "axios";
 import { courseService } from "../../api/courseService";
-import type { Course, CreateCourseForm } from "../../types/enrollment";
+import type {
+  Course,
+  CreateCourseForm,
+  Semester,
+} from "../../types/enrollment";
 import {
   departments,
   getClearingOfficersAsInstructors,
-  semesters,
+  getSemesters,
   yearLevels,
   type Instructor,
 } from "@/data/subData";
@@ -54,6 +58,7 @@ const CourseManagement: React.FC = () => {
     department: "",
   });
   const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const [semesters, setSemesters] = useState<Semester[]>([]);
 
   const [courseForm] = Form.useForm();
 
@@ -108,7 +113,20 @@ const CourseManagement: React.FC = () => {
     }
   };
 
+  const fetchSemesters = async () => {
+    setLoading(true);
+    try {
+      const data = await getSemesters();
+      setSemesters(data);
+    } catch (error) {
+      console.error("Error loading semesters:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
+    fetchSemesters();
     fetchInstructors();
     fetchData();
   }, []);
@@ -140,9 +158,9 @@ const CourseManagement: React.FC = () => {
     setTimeout(() => {
       courseForm.setFieldsValue({
         units: 3,
-        maxCapacity: 30,
-        semester: "1st Semester",
-        yearLevel: "1st Year",
+        maxCapacity: 0,
+        semester: "",
+        yearLevel: "",
         departments: [], // Initialize with empty departments array
         schedules: [], // Initialize with empty schedules array
       });
