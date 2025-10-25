@@ -2,7 +2,7 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 // Create axios instance with base configuration
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000",
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:4000",
   timeout: 10000,
   withCredentials: true,
   headers: {
@@ -10,17 +10,17 @@ const axiosInstance = axios.create({
   },
 });
 
-// Request interceptor: Attach access token automatically | All requests automatically include the token:
-axiosInstance.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+// // Request interceptor: Attach access token automatically | All requests automatically include the token:
+// axiosInstance.interceptors.request.use(
+//   (config) => {
+//     const token = localStorage.getItem("accessToken");
+//     if (token) {
+//       config.headers.Authorization = `Bearer ${token}`;
+//     }
+//     return config;
+//   },
+//   (error) => Promise.reject(error)
+// );
 
 // Response interceptor for handling expired access tokens
 axiosInstance.interceptors.response.use(

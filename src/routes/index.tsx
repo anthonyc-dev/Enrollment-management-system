@@ -42,6 +42,14 @@ const AppRoutes: React.FC = () => {
           </PublicRoute>
         }
       />
+      <Route
+        path="login"
+        element={
+          <PublicRoute>
+            <EnrollmentLogin />
+          </PublicRoute>
+        }
+      />
 
       <Route path="unauthorized" element={<Unauthorized />} />
     </Routes>
