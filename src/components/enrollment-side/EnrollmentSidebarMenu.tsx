@@ -10,7 +10,6 @@ import {
   UserCheck,
 } from "lucide-react";
 import { cn } from "../../lib/utils";
-import UserDropdown from "../clearing-officer/UserLogoutDropdown";
 
 const enrollmentNavbar = [
   {
