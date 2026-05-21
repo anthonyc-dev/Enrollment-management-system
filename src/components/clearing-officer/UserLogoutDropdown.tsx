@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Dropdown, Avatar, type MenuProps, message } from "antd";
+import { Dropdown, type MenuProps, message } from "antd";
 import { UserOutlined, LogoutOutlined } from "@ant-design/icons";
 import axiosInstance from "@/api/axios";
 
@@ -65,9 +65,21 @@ const UserDropdown: React.FC = () => {
       placement="bottomRight"
       arrow
     >
-      <div className="cursor-pointer flex items-center gap-2">
-        <Avatar size="large" icon={<UserOutlined />} />
-        <span className="text-gray-300 text-sm">Enrollment Officer</span>
+      <div className="rounded-lg hover:bg-gray-800 p-3 animate-fade-in">
+        <div className="flex items-center gap-3">
+          <img
+            alt=""
+            src="https://images.unsplash.com/photo-1600486913747-55e5470d6f40?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80"
+            className="size-10 rounded-full object-cover"
+          />
+
+          <div>
+            <p className="font-medium text-xs text-indigo-400">
+              Administrator
+            </p>
+            <p className="text-xs text-gray-400">ncmc@gmail.com</p>
+          </div>
+        </div>
       </div>
     </Dropdown>
   );

@@ -328,10 +328,10 @@ const StudentManagement: React.FC = () => {
             status === "Active"
               ? "green"
               : status === "Inactive"
-              ? "orange"
-              : status === "Graduated"
-              ? "blue"
-              : "red"
+                ? "orange"
+                : status === "Graduated"
+                  ? "blue"
+                  : "red"
           }
         >
           {status}
@@ -378,9 +378,9 @@ const StudentManagement: React.FC = () => {
             <UserOutlined className="text-blue-600" />
             Student Management
           </h1>
-          <p className="text-gray-500 mt-2">
+          {/* <p className="text-gray-500 mt-2">
             Add, edit, and manage student accounts
-          </p>
+          </p> */}
         </div>
         <div className="flex gap-2">
           <Button
@@ -388,7 +388,7 @@ const StudentManagement: React.FC = () => {
             icon={<PlusOutlined />}
             onClick={handleAddStudent}
           >
-            Add Student
+            Register
           </Button>
         </div>
       </div>
@@ -757,8 +757,8 @@ const StudentManagement: React.FC = () => {
                   <div className="text-lg text-white">
                     {viewingStudent.dateOfBirth
                       ? dayjs(viewingStudent.dateOfBirth).format(
-                          "MMMM DD, YYYY"
-                        )
+                        "MMMM DD, YYYY"
+                      )
                       : "N/A"}
                   </div>
                 </div>
@@ -843,10 +843,10 @@ const StudentManagement: React.FC = () => {
                         viewingStudent.status === "Active"
                           ? "green"
                           : viewingStudent.status === "Inactive"
-                          ? "orange"
-                          : viewingStudent.status === "Graduated"
-                          ? "blue"
-                          : "red"
+                            ? "orange"
+                            : viewingStudent.status === "Graduated"
+                              ? "blue"
+                              : "red"
                       }
                       className="text-sm px-3 py-1 font-semibold"
                     >

@@ -88,25 +88,20 @@ export default function EnrollmentLogin() {
   return (
     <div className="min-h-screen flex">
       {/* Left side: branding */}
-      <div className="hidden lg:flex flex-1 items-center justify-center bg-gradient-to-br from-green-900 via-green-800 to-green-900">
+      <div className="hidden lg:flex flex-1 items-center justify-center bg-gradient-to-br from-indigo-900 via-violet-800 to-indigo-900">
         <div className="text-center text-white p-8">
           <div className="flex justify-center mb-8">
             <div className="relative">
-              <img
-                className="h-20 w-20 rounded-xl object-cover ring-2 ring-blue-500/30 shadow-lg"
-                src="/MICRO FLUX LOGO.png"
-                alt="Menu icon"
-              />
-              <div className="absolute -top-1 -right-1 h-4 w-4 bg-emerald-500 rounded-full border-2 border-slate-800 animate-pulse"></div>
+              <img className="h-14 w-20" src="/10.png" alt="Menu icon" />
             </div>
           </div>
           <h1 className="text-4xl font-bold mb-4">Enrollment Management</h1>
-          <p className="text-xl text-green-100 mb-8">
+          <p className="text-xl text-indigo-100 mb-8 w-[80%] text-center mx-auto">
             Streamline student enrollment with our comprehensive management
             system
           </p>
 
-          <div className="grid grid-cols-2 gap-6 text-left">
+          {/* <div className="grid grid-cols-2 gap-6 text-left">
             <div className="flex items-center justify-center gap-3">
               <div className="bg-white/20 rounded-full p-2">
                 <BookOpen className="h-5 w-5" />
@@ -119,25 +114,25 @@ export default function EnrollmentLogin() {
               </div>
               <span>Student Records</span>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 
       {/* Right side: Login form */}
-      <div className="flex flex-col justify-center flex-1 px-6 py-12 bg-[#0F0E0E]">
+      <div className="flex flex-col justify-center flex-1 px-6 py-12 bg-[#13111C]">
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
           <div className="flex justify-center mb-6">
             <div className="flex items-center gap-3">
               <img
-                className="h-12 w-12 rounded-md object-cover"
-                src="/MICRO FLUX LOGO.png"
+                className="h-8 w-11 object-center"
+                src="/10.png"
                 alt="Enrollment System Logo"
               />
               <div>
-                <h2 className="text-2xl font-bold text-gray-300">
+                <h2 className="text-lg font-bold text-gray-300">
                   Enrollment System
                 </h2>
-                <p className="text-sm text-gray-500">NCMC Clearance Portal</p>
+                <p className="text-xs text-gray-500">NCMC Clearance Portal</p>
               </div>
             </div>
           </div>
@@ -181,7 +176,7 @@ export default function EnrollmentLogin() {
             />
 
             <div className="text-sm my-5 flex justify-end">
-              <a href="#" className="text-green-600 hover:text-green-500">
+              <a href="#" className="text-indigo-400 hover:text-indigo-300">
                 Forgot password?
               </a>
             </div>
@@ -198,21 +193,21 @@ export default function EnrollmentLogin() {
             <Link
               to="https://ncmcmaranding.com/contact-us"
               target="_blank"
-              className="text-green-600 hover:underline hover:text-green-500 transition"
+              className="text-indigo-400 hover:underline hover:text-indigo-300 transition"
             >
               Contact system administrator
             </Link>
           </div>
 
-          <div className="text-center text-xs sm:text-sm text-gray-600 mt-3">
+          {/* <div className="text-center text-xs sm:text-sm text-gray-600 mt-3">
             Back to{" "}
             <Link
               to="/"
-              className="text-green-600 hover:underline hover:text-green-500 transition"
+              className="text-indigo-400 hover:underline hover:text-indigo-300 transition"
             >
               main portal
             </Link>
-          </div>
+          </div> */}
         </div>
       </div>
 

@@ -112,9 +112,9 @@ const ClearingOfficerManagement: React.FC = () => {
             <UserOutlined className="text-blue-600" />
             Clearing Officer Management
           </h1>
-          <p className="text-gray-500 mt-2">
+          {/* <p className="text-gray-500 mt-2">
             Add, edit, and manage clearing officer accounts
-          </p>
+          </p> */}
         </div>
         <div className="flex items-center gap-3">
           <Input
@@ -133,7 +133,7 @@ const ClearingOfficerManagement: React.FC = () => {
               setFormVisible(true);
             }}
           >
-            Add Officer
+            Register
           </Button>
         </div>
       </div>

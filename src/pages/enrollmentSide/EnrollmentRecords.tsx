@@ -399,7 +399,7 @@ const EnrollmentRecords: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Enrolled":
-        return "green";
+        return "purple";
       case "Dropped":
         return "red";
       case "Withdrawn":
@@ -441,7 +441,7 @@ const EnrollmentRecords: React.FC = () => {
       title: "Year Level",
       dataIndex: ["student", "yearLevel"],
       key: "yearLevel",
-      render: (yearLevel: string) => <Tag color="green">{yearLevel}</Tag>,
+      render: (yearLevel: string) => <Tag color="purple">{yearLevel}</Tag>,
       responsive: ["md", "lg", "xl"],
     },
     {
@@ -679,7 +679,7 @@ const EnrollmentRecords: React.FC = () => {
                   filteredRecords.filter((r) => r.status === "Enrolled").length
                 }
                 showZero
-                color="green"
+                color="purple"
               />
               <div className="text-sm text-gray-600 mt-1">
                 Active Enrollments
@@ -774,7 +774,7 @@ const EnrollmentRecords: React.FC = () => {
                     </p>
                     <p>
                       <strong>Status:</strong>{" "}
-                      <Tag color="green">{selectedRecord.student.status}</Tag>
+                      <Tag color="purple">{selectedRecord.student.status}</Tag>
                     </p>
                   </div>
                 </div>

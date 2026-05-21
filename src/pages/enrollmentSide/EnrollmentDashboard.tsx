@@ -53,25 +53,24 @@ import type {
   ClearingOfficer,
 } from "../../types/enrollment";
 
-// Chart colors - Dark theme with green variations
+// Chart colors - Dark theme with indigo-violet variations
 const COLORS = [
-  "#00ff88", // Bright green
-  "#00cc6a", // Medium green
-  "#00b359", // Darker green
-  "#00ff99", // Light green
-  "#00e676", // Material green
-  "#00ffaa", // Cyan-green
-  "#00ff77", // Lime green
-  "#00ff66", // Neon green
+  "#7C6CFF", // Bright indigo
+  "#9B8CFF", // Light indigo
+  "#6C5CE7", // Medium violet
+  "#A78BFA", // Soft violet
+  "#8B5CF6", // Purple
+  "#818CF8", // Periwinkle
+  "#6366F1", // Indigo
+  "#C4B5FD", // Lavender
 ];
 
-// Dark theme colors for backgrounds and text
 const DARK_THEME = {
-  background: "#1f1f1f",
+  background: "#1A1730",
   text: "#ffffff",
-  grid: "#333333",
-  tooltip: "#2d2d2d",
-  card: "#2a2a2a",
+  grid: "#2D2654",
+  tooltip: "#211D3A",
+  card: "#1E1B35",
 };
 
 const EnrollmentDashboard: React.FC = () => {
@@ -265,7 +264,7 @@ const EnrollmentDashboard: React.FC = () => {
       title: "Year Level",
       dataIndex: "yearLevel",
       key: "yearLevel",
-      render: (yearLevel: string) => <Tag color="green">{yearLevel}</Tag>,
+      render: (yearLevel: string) => <Tag color="purple">{yearLevel}</Tag>,
     },
     {
       title: "Semester",
@@ -354,7 +353,7 @@ const EnrollmentDashboard: React.FC = () => {
               title="Total Students"
               value={stats.totalStudents}
               prefix={<UserOutlined style={{ color: "#1890ff" }} />}
-              valueStyle={{ color: "#3f8600" }}
+              valueStyle={{ color: "#6C5CE7" }}
             />
             {/* <div style={{ color: "#3f8600", fontSize: "14px" }}>
               Active: {students.filter((s) => s.status === "Active").length}
@@ -367,7 +366,7 @@ const EnrollmentDashboard: React.FC = () => {
               title="Total Courses"
               value={stats.totalCourses}
               prefix={<BookOutlined style={{ color: "#722ed1" }} />}
-              valueStyle={{ color: "#3f8600" }}
+              valueStyle={{ color: "#6C5CE7" }}
             />
           </Card>
         </Col>
@@ -377,7 +376,7 @@ const EnrollmentDashboard: React.FC = () => {
               title="Total Officers"
               value={stats.totalClearingOfficers}
               prefix={<BarChartOutlined style={{ color: "#52c41a" }} />}
-              valueStyle={{ color: "#3f8600" }}
+              valueStyle={{ color: "#6C5CE7" }}
             />
           </Card>
         </Col>
@@ -387,7 +386,7 @@ const EnrollmentDashboard: React.FC = () => {
               title="Current Enrollments"
               value={stats.activeEnrollments}
               prefix={<TeamOutlined style={{ color: "#fa8c16" }} />}
-              valueStyle={{ color: "#3f8600" }}
+              valueStyle={{ color: "#6C5CE7" }}
             />
             {/* <div style={{ color: "#3f8600", fontSize: "14px" }}>
               This Semester: {currentSemesterRecords.length}
@@ -416,7 +415,7 @@ const EnrollmentDashboard: React.FC = () => {
                 <Tag
                   color={
                     currentSemester.status === "Active"
-                      ? "green"
+                      ? "purple"
                       : currentSemester.status === "Upcoming"
                       ? "blue"
                       : "orange"
@@ -469,7 +468,7 @@ const EnrollmentDashboard: React.FC = () => {
             }}
           >
             <div className="space-y-3 mb-4">
-              <div className="text-sm" style={{ color: "#00ff88" }}>
+              <div className="text-sm" style={{ color: "#7C6CFF" }}>
                 Total Departments with Enrollments:{" "}
                 {stats.enrollmentByDepartment.length}
               </div>
@@ -524,7 +523,7 @@ const EnrollmentDashboard: React.FC = () => {
             }}
           >
             <div className="space-y-3 mb-4">
-              <div className="text-sm" style={{ color: "#00ff88" }}>
+              <div className="text-sm" style={{ color: "#7C6CFF" }}>
                 Total Year Levels with Enrollments:{" "}
                 {stats.enrollmentByYearLevel.length}
               </div>
@@ -536,7 +535,7 @@ const EnrollmentDashboard: React.FC = () => {
                     style={{ backgroundColor: DARK_THEME.background }}
                   >
                     <span className="font-medium">{year.yearLevel}</span>
-                    <Badge count={year.count} showZero color="green" />
+                    <Badge count={year.count} showZero color="purple" />
                   </div>
                 ))}
               </div>

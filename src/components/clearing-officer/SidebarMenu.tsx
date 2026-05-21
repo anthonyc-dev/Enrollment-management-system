@@ -51,7 +51,7 @@ export function AppSidebar({ closeSidebar }: CloseSidebarProps) {
   return (
     <aside
       className={cn(
-        "h-screen bg-[#00171f] transition-all duration-300 ease-in-out flex flex-col"
+        "h-screen bg-[#1A1730] transition-all duration-300 ease-in-out flex flex-col"
       )}
     >
       {/* Header */}
@@ -108,13 +108,13 @@ export function AppSidebar({ closeSidebar }: CloseSidebarProps) {
                 className={cn(
                   "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-300 group",
                   active
-                    ? "bg-blue-600 text-white shadow-sm"
+                    ? "bg-indigo-600 text-white shadow-sm"
                     : "text-gray-200 hover:bg-gray-800 hover:text-white"
                 )}
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 {active && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-700 opacity-90 rounded-lg z-0" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-violet-600 opacity-90 rounded-lg z-0" />
                 )}
                 <Icon
                   className={cn(
@@ -154,7 +154,7 @@ export function AppSidebar({ closeSidebar }: CloseSidebarProps) {
             />
 
             <div>
-              <p className="font-medium text-xs text-blue-600">
+              <p className="font-medium text-xs text-indigo-400">
                 Anthony Crausus
               </p>
               <p className="text-xs text-gray-400">anthony.dev@gmail.com</p>
